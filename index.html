@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Ming Arcana · 云端抽牌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky-1:#eaf3ff;      /* 最浅天蓝白 */
+  --sky-2:#d6e8ff;      /* 浅天蓝 */
+  --sky-3:#b8d4f5;      /* 中天蓝 */
+  --blue-deep:#3b6fb0;  /* 深蓝（文字/描边） */
+  --blue-ink:#27486f;   /* 墨蓝（主文字） */
+  --blue-soft:#5b8dd0;  /* 柔蓝 */
+  --gold:#c9a86a;       /* 低调暖金（点缀） */
+  --gold-soft:#e3cfa0;
+  --cloud:#ffffff;
+  --glass:rgba(255,255,255,0.55);
+  --glass-strong:rgba(255,255,255,0.78);
+  --shadow-blue:rgba(91,141,208,0.25);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:"Noto Serif SC",-apple-system,"PingFang SC","Microsoft YaHei",serif;
+  color:var(--blue-ink);
+  background:linear-gradient(180deg,#eaf3ff 0%,#dcebff 35%,#cfe3ff 70%,#c4dcff 100%);
+  overflow-x:hidden;
+  user-select:none;
+  position:relative;
+  min-height:100vh;
+}
+
+/* ========== 梦幻云朵背景 ========== */
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.cloud-layer{position:absolute;inset:0;}
+.cloud{
+  position:absolute;
+  background:radial-gradient(closest-side, rgba(255,255,255,0.95), rgba(255,255,255,0.6) 60%, rgba(255,255,255,0) 100%);
+  border-radius:50%;
+  filter:blur(8px);
+  opacity:0.8;
+}
+.cloud::before,.cloud::after{
+  content:"";position:absolute;border-radius:50%;
+  background:radial-gradient(closest-side, rgba(255,255,255,0.95), rgba(255,255,255,0) 100%);
+  filter:blur(6px);
+}
+.c1{width:340px;height:160px;top:8%;left:-10%;animation:float1 80s linear infinite;}
+.c1::before{width:200px;height:200px;top:-80px;left:50px;}
+.c1::after{width:160px;height:160px;top:-40px;left:180px;}
+.c2{width:280px;height:130px;top:32%;left:60%;animation:float2 100s linear infinite;}
+.c2::before{width:170px;height:170px;top:-70px;left:40px;}
+.c2::after{width:130px;height:130px;top:-30px;left:150px;}
+.c3{width:400px;height:180px;top:62%;left:-20%;animation:float1 120s linear infinite;animation-delay:-30s;}
+.c3::before{width:230px;height:230px;top:-90px;left:70px;}
+.c3::after{width:180px;height:180px;top:-50px;left:220px;}
+.c4{width:240px;height:120px;top:78%;left:70%;animation:float2 90s linear infinite;animation-delay:-20s;}
+.c4::before{width:150px;height:150px;top:-60px;left:30px;}
+.c4::after{width:120px;height:120px;top:-25px;left:130px;}
+@keyframes float1{from{transform:translateX(0)}to{transform:translateX(130vw)}}
+@keyframes float2{from{transform:translateX(0)}to{transform:translateX(-130vw)}}
+
+/* 漂浮微光点（星尘） */
+.dust{position:absolute;border-radius:50%;background:#fff;box-shadow:0 0 6px #fff,0 0 12px rgba(201,168,106,0.5);animation:twinkle 4s ease-in-out infinite;}
+@keyframes twinkle{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:0.9;transform:scale(1.2)}}
+
+/* 顶部柔光 */
+.sky::after{
+  content:"";position:absolute;top:-30%;left:50%;transform:translateX(-50%);
+  width:120%;height:60%;
+  background:radial-gradient(ellipse at center, rgba(255,255,255,0.7), rgba(255,255,255,0) 70%);
+  pointer-events:none;
+}
+
+/* ========== 启动屏 ========== */
+.intro{
+  position:fixed;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;text-align:center;
+  background:linear-gradient(180deg,#eef5ff 0%,#dcebff 60%,#cfe3ff 100%);
+  transition:opacity .9s,visibility .9s;
+}
+.intro.hide{opacity:0;visibility:hidden;}
+.intro .moon{
+  width:120px;height:120px;border-radius:50%;
+  background:radial-gradient(circle at 38% 35%, #ffffff, #eaf3ff 55%, #cfe0f7 100%);
+  box-shadow:0 0 50px rgba(255,255,255,0.9),0 0 90px rgba(184,212,245,0.7), inset -12px -12px 30px rgba(150,180,220,0.35);
+  margin-bottom:28px;position:relative;animation:breathe 6s ease-in-out infinite;
+}
+.intro .moon::after{
+  content:"✦";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:38px;color:var(--gold);text-shadow:0 0 14px rgba(201,168,106,0.6);
+}
+@keyframes breathe{0%,100%{transform:scale(1);box-shadow:0 0 50px rgba(255,255,255,0.9),0 0 90px rgba(184,212,245,0.7), inset -12px -12px 30px rgba(150,180,220,0.35)}50%{transform:scale(1.05);box-shadow:0 0 70px rgba(255,255,255,1),0 0 120px rgba(184,212,245,0.9), inset -12px -12px 30px rgba(150,180,220,0.35)}}
+.intro .name{
+  font-family:"Ma Shan Zheng","Noto Serif SC",serif;
+  font-size:52px;letter-spacing:10px;color:var(--blue-ink);
+  text-shadow:0 2px 18px rgba(255,255,255,0.9);margin-bottom:6px;
+}
+.intro .slogan{font-size:13px;letter-spacing:6px;color:var(--blue-soft);margin-bottom:8px;opacity:.85;}
+.intro .desc{font-size:13px;letter-spacing:2px;color:var(--blue-soft);line-height:1.9;max-width:300px;margin-bottom:40px;opacity:.9;}
+.intro-btn{
+  font-family:"Noto Serif SC",serif;
+  padding:15px 52px;font-size:17px;letter-spacing:8px;
+  color:#fff;border:none;border-radius:40px;cursor:pointer;
+  background:linear-gradient(135deg,var(--blue-soft),var(--blue-deep));
+  box-shadow:0 10px 30px var(--shadow-blue),inset 0 1px 1px rgba(255,255,255,0.5);
+  transition:transform .25s,box-shadow .25s;
+}
+.intro-btn:hover{transform:translateY(-3px);box-shadow:0 16px 40px var(--shadow-blue),inset 0 1px 1px rgba(255,255,255,0.6);}
+.intro-btn:active{transform:translateY(0);}
+.intro .privacy{margin-top:26px;font-size:11px;letter-spacing:1px;color:var(--blue-soft);opacity:.7;line-height:1.7;}
+
+/* ========== 主舞台 ========== */
+.stage{position:relative;z-index:2;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:18px 16px 40px;}
+.topbar{width:100%;max-width:760px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.brand{font-family:"Ma Shan Zheng",serif;font-size:26px;letter-spacing:4px;color:var(--blue-ink);}
+.brand small{font-family:"Noto Serif SC";font-size:10px;letter-spacing:3px;color:var(--blue-soft);display:block;margin-top:-2px;}
+
+/* 步骤指示 */
+.steps{display:flex;gap:8px;align-items:center;font-size:12px;letter-spacing:1px;color:var(--blue-soft);}
+.steps .stp{padding:4px 10px;border-radius:20px;background:var(--glass);transition:all .3s;opacity:.6;}
+.steps .stp.on{background:linear-gradient(135deg,var(--blue-soft),var(--blue-deep));color:#fff;opacity:1;box-shadow:0 4px 12px var(--shadow-blue);}
+
+/* 牌阵选择 */
+.spread-picker{width:100%;max-width:760px;margin:6px 0 14px;}
+.spread-picker .label{font-size:12px;letter-spacing:2px;color:var(--blue-soft);margin-bottom:8px;text-align:center;}
+.spread-tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.spread-tab{
+  cursor:pointer;border-radius:18px;padding:10px 16px;min-width:140px;
+  background:var(--glass);backdrop-filter:blur(8px);
+  border:1.5px solid rgba(255,255,255,0.7);
+  box-shadow:0 6px 18px rgba(91,141,208,0.12);
+  transition:all .25s;text-align:center;
+}
+.spread-tab:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(91,141,208,0.2);}
+.spread-tab.active{
+  background:linear-gradient(135deg,rgba(91,141,208,0.95),rgba(59,111,176,0.95));
+  border-color:rgba(255,255,255,0.9);
+  box-shadow:0 12px 28px var(--shadow-blue);
+}
+.spread-tab.active .st-name,.spread-tab.active .st-meta{color:#fff;}
+.st-name{font-size:15px;font-weight:600;letter-spacing:2px;color:var(--blue-ink);margin-bottom:2px;}
+.st-meta{font-size:11px;letter-spacing:1px;color:var(--blue-soft);}
+
+/* 问题输入 */
+.question-box{width:100%;max-width:520px;margin:0 auto 16px;display:flex;gap:8px;}
+.question-box input{
+  flex:1;font-family:"Noto Serif SC",serif;font-size:14px;letter-spacing:1px;
+  padding:12px 18px;border-radius:24px;border:1.5px solid rgba(255,255,255,0.8);
+  background:var(--glass-strong);color:var(--blue-ink);outline:none;
+  box-shadow:inset 0 1px 4px rgba(91,141,208,0.1);
+}
+.question-box input::placeholder{color:var(--blue-soft);opacity:.7;}
+
+/* 摄像头预览 */
+.camera-wrap{position:relative;width:280px;height:210px;margin:4px auto 16px;}
+.video-frame{
+  position:absolute;inset:0;border-radius:24px;overflow:hidden;
+  background:linear-gradient(135deg,#dcebff,#c4dcff);
+  border:2px solid rgba(255,255,255,0.85);
+  box-shadow:0 14px 40px rgba(91,141,208,0.3),inset 0 0 30px rgba(255,255,255,0.4);
+}
+.video-frame video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+.video-frame .overlay{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(196,220,255,0.4) 100%);pointer-events:none;}
+.corner{position:absolute;width:22px;height:22px;border:2px solid #fff;opacity:.9;}
+.corner.tl{top:12px;left:12px;border-right:none;border-bottom:none;border-radius:6px 0 0 0;}
+.corner.tr{top:12px;right:12px;border-left:none;border-bottom:none;border-radius:0 6px 0 0;}
+.corner.bl{bottom:12px;left:12px;border-right:none;border-top:none;border-radius:0 0 0 6px;}
+.corner.br{bottom:12px;right:12px;border-left:none;border-top:none;border-radius:0 0 6px 0;}
+.hand-hint{
+  position:absolute;top:14px;left:50%;transform:translateX(-50%);
+  font-size:12px;letter-spacing:1px;color:var(--blue-deep);
+  padding:5px 14px;background:rgba(255,255,255,0.85);border-radius:20px;
+  opacity:0;transition:opacity .4s;white-space:nowrap;
+}
+.hand-hint.show{opacity:1;animation:hintpulse 1.6s ease-in-out infinite;}
+@keyframes hintpulse{0%,100%{opacity:.75}50%{opacity:1}}
+.detect-ring{
+  position:absolute;top:50%;left:50%;width:90px;height:90px;
+  border:3px solid rgba(255,255,255,0.8);border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);transition:transform .3s,border-color .3s,box-shadow .3s;pointer-events:none;
+}
+.detect-ring.active{transform:translate(-50%,-50%) scale(1);}
+.detect-ring.locked{border-color:var(--gold);box-shadow:0 0 26px var(--gold-soft);}
+
+/* 摄像头授权失败引导卡 */
+.cam-error{
+  position:absolute;inset:0;border-radius:24px;
+  background:var(--glass-strong);backdrop-filter:blur(10px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:18px;text-align:center;border:2px solid rgba(255,255,255,0.85);
+}
+.cam-error.show{display:flex;}
+.cam-error .ce-icon{font-size:30px;margin-bottom:8px;}
+.cam-error .ce-title{font-size:14px;font-weight:600;color:var(--blue-ink);margin-bottom:6px;letter-spacing:1px;}
+.cam-error .ce-msg{font-size:12px;color:var(--blue-soft);line-height:1.7;margin-bottom:14px;}
+.cam-error .ce-btns{display:flex;gap:8px;}
+.ce-btn{font-family:"Noto Serif SC";font-size:12px;letter-spacing:1px;padding:8px 16px;border-radius:20px;cursor:pointer;border:none;}
+.ce-btn.primary{background:linear-gradient(135deg,var(--blue-soft),var(--blue-deep));color:#fff;}
+.ce-btn.ghost{background:rgba(255,255,255,0.7);color:var(--blue-deep);border:1.5px solid rgba(91,141,208,0.3);}
+
+/* ========== 牌桌 ========== */
+.table{width:100%;max-width:860px;min-height:200px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin:8px 0 18px;position:relative;}
+
+/* 牌堆 */
+.deck{position:relative;width:104px;height:168px;cursor:pointer;}
+.deck .deck-card{position:absolute;inset:0;border-radius:12px;}
+.deck:hover .deck-top{transform:translateY(-8px);}
+.deck-hint{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;color:var(--blue-soft);letter-spacing:1px;}
+
+/* 单张牌（通用） */
+.card{
+  width:104px;height:168px;position:relative;perspective:1000px;cursor:default;flex-shrink:0;
+}
+.card .inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .8s cubic-bezier(.4,.0,.2,1);}
+.card.flipped .inner{transform:rotateY(180deg);}
+.card .face{
+  position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  overflow:hidden;box-shadow:0 10px 26px rgba(91,141,208,0.3);
+}
+/* 牌背：云蓝曼陀罗 */
+.card .back{
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.9) 0%, rgba(214,232,255,0.4) 30%, transparent 55%),
+    linear-gradient(135deg,#5b8dd0,#3b6fb0);
+  border:2px solid rgba(255,255,255,0.85);
+  display:flex;align-items:center;justify-content:center;
+}
+.card .back .mandala{width:70%;height:70%;border:2px solid rgba(255,255,255,0.7);border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;}
+.card .back .mandala::before{content:"";position:absolute;width:60%;height:60%;border:1.5px solid rgba(255,255,255,0.55);border-radius:50%;}
+.card .back .mandala::after{content:"✦";font-size:26px;color:#fff;text-shadow:0 0 10px rgba(255,255,255,0.9);}
+/* 牌面：白底蓝边 */
+.card .front{
+  transform:rotateY(180deg);
+  background:linear-gradient(165deg,#ffffff 0%,#f2f8ff 100%);
+  border:2px solid var(--blue-soft);
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:8px 5px;color:var(--blue-ink);
+}
+.card .front .f-top{font-size:10px;letter-spacing:1px;color:var(--blue-soft);}
+.card .front .f-icon{font-size:30px;line-height:1;margin:2px 0;}
+.card .front .f-name{font-size:13px;font-weight:600;letter-spacing:1px;text-align:center;line-height:1.2;}
+.card .front .f-en{font-size:8px;letter-spacing:.5px;color:var(--blue-soft);text-align:center;}
+.card .front .f-rev{position:absolute;top:6px;right:6px;font-size:9px;color:#c25b5b;border:1px solid #d98a8a;border-radius:8px;padding:1px 5px;background:rgba(255,235,235,0.8);}
+.card.reversed .front .f-icon,.card.reversed .front .f-name,.card.reversed .front .f-en{transform:rotate(180deg);}
+
+/* 牌位标签 */
+.slot{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.slot .pos-label{font-size:11px;letter-spacing:1px;color:var(--blue-soft);min-height:14px;text-align:center;max-width:110px;line-height:1.3;}
+
+/* 凯尔特十字专属网格布局 */
+.table.celtic{display:grid;gap:8px;max-width:560px;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-areas:
+    ".    crown past  ."
+    "rec  core  near  staff1"
+    ".    found .     staff2"
+    ".    .     .     staff3"
+    ".    .     .     staff4";
+  align-items:center;justify-items:center;}
+.table.celtic .slot{transform:scale(.82);}
+.table.celtic .s-core{grid-area:core;position:relative;z-index:2;}
+.table.celtic .s-cross{grid-area:core;z-index:3;transform:rotate(90deg) scale(.82);}
+.table.celtic .s-crown{grid-area:crown;}
+.table.celtic .s-found{grid-area:found;}
+.table.celtic .s-past{grid-area:past;}
+.table.celtic .s-rec{grid-area:rec;}
+.table.celtic .s-near{grid-area:near;}
+.table.celtic .s-staff1{grid-area:staff1;}
+.table.celtic .s-staff2{grid-area:staff2;}
+.table.celtic .s-staff3{grid-area:staff3;}
+.table.celtic .s-staff4{grid-area:staff4;}
+
+/* ========== 控制区 ========== */
+.controls{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:520px;}
+.status{font-size:14px;letter-spacing:1px;color:var(--blue-deep);text-align:center;min-height:22px;line-height:1.5;}
+.status .hl{color:var(--gold);font-weight:600;}
+.btn{
+  font-family:"Noto Serif SC",serif;
+  padding:14px 44px;font-size:16px;letter-spacing:6px;color:#fff;border:none;border-radius:36px;cursor:pointer;
+  background:linear-gradient(135deg,var(--blue-soft),var(--blue-deep));
+  box-shadow:0 10px 28px var(--shadow-blue),inset 0 1px 1px rgba(255,255,255,0.5);
+  transition:transform .25s,box-shadow .25s,opacity .25s;
+}
+.btn:hover:not(:disabled){transform:translateY(-3px);box-shadow:0 16px 36px var(--shadow-blue);}
+.btn:active:not(:disabled){transform:translateY(0);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.btn-ghost{
+  padding:9px 20px;font-size:12px;letter-spacing:2px;border-radius:24px;
+  background:var(--glass-strong);color:var(--blue-deep);border:1.5px solid rgba(91,141,208,0.3);
+  box-shadow:none;
+}
+.btn-ghost:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 16px rgba(91,141,208,0.15);}
+
+/* ========== 解读面板 ========== */
+.reading{
+  position:fixed;inset:0;z-index:200;overflow-y:auto;
+  background:linear-gradient(180deg,rgba(234,243,255,0.97),rgba(207,227,255,0.97));
+  backdrop-filter:blur(16px);
+  opacity:0;visibility:hidden;transition:opacity .5s,visibility .5s;
+  padding:30px 18px 50px;
+}
+.reading.show{opacity:1;visibility:visible;}
+.reading-inner{max-width:680px;margin:0 auto;}
+.reading-head{text-align:center;margin-bottom:8px;}
+.reading-head h2{font-family:"Ma Shan Zheng",serif;font-size:30px;letter-spacing:4px;color:var(--blue-ink);}
+.reading-head .r-sub{font-size:12px;letter-spacing:2px;color:var(--blue-soft);margin-top:4px;}
+.reading-head .r-q{font-size:13px;color:var(--blue-deep);margin-top:10px;font-style:italic;}
+
+/* 故事主体 */
+.story{
+  background:var(--glass-strong);border-radius:22px;padding:26px 24px;margin:22px 0;
+  border:1.5px solid rgba(255,255,255,0.9);box-shadow:0 16px 40px rgba(91,141,208,0.15);
+  position:relative;
+}
+.story::before{content:"❝";position:absolute;top:8px;left:16px;font-size:46px;color:var(--gold-soft);font-family:serif;line-height:1;opacity:.6;}
+.story h3{font-size:15px;letter-spacing:3px;color:var(--blue-deep);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.story h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gold-soft),transparent);}
+.story p{font-size:15px;line-height:2.05;color:var(--blue-ink);letter-spacing:.5px;margin-bottom:14px;text-indent:0;}
+.story p:last-child{margin-bottom:0;}
+.story .accent{color:var(--blue-deep);font-weight:600;}
+.story .ghost-name{color:var(--gold);font-weight:600;}
+
+/* 逐牌卡 */
+.cards-detail{display:flex;flex-direction:column;gap:14px;margin:22px 0;}
+.cd-item{
+  display:flex;gap:14px;align-items:flex-start;
+  background:var(--glass);border-radius:18px;padding:16px;
+  border:1.5px solid rgba(255,255,255,0.8);box-shadow:0 8px 22px rgba(91,141,208,0.1);
+}
+.cd-mini{width:54px;height:86px;border-radius:8px;flex-shrink:0;
+  background:linear-gradient(165deg,#fff,#f2f8ff);border:1.5px solid var(--blue-soft);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+.cd-mini .m-icon{font-size:22px;}
+.cd-mini .m-name{font-size:9px;color:var(--blue-ink);letter-spacing:.5px;text-align:center;line-height:1.1;}
+.cd-mini.rev .m-icon,.cd-mini.rev .m-name{transform:rotate(180deg);}
+.cd-body{flex:1;}
+.cd-pos{font-size:11px;letter-spacing:1px;color:var(--gold);margin-bottom:3px;}
+.cd-name{font-size:15px;font-weight:600;color:var(--blue-ink);margin-bottom:4px;}
+.cd-name .orient{font-size:11px;font-weight:400;margin-left:6px;padding:1px 7px;border-radius:8px;}
+.cd-name .orient.up{color:var(--blue-deep);background:rgba(91,141,208,0.12);}
+.cd-name .orient.rev{color:#c25b5b;background:rgba(220,138,138,0.15);}
+.cd-keys{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
+.cd-keys .k{font-size:10px;padding:2px 9px;border-radius:11px;background:rgba(201,168,106,0.15);color:#a8843f;}
+.cd-text{font-size:13px;line-height:1.8;color:var(--blue-ink);}
+
+.r-actions{display:flex;gap:10px;justify-content:center;margin-top:24px;}
+
+/* 抽牌飞舞光点 */
+.spark{position:fixed;width:7px;height:7px;border-radius:50%;background:#fff;box-shadow:0 0 10px #fff,0 0 18px var(--gold-soft);pointer-events:none;z-index:150;}
+
+/* 隐私角标 */
+.privacy-tip{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);z-index:3;font-size:10px;letter-spacing:1px;color:var(--blue-soft);opacity:.6;}
+
+/* 响应式 */
+@media(max-width:600px){
+  .card,.deck{width:88px;height:142px;}
+  .cd-mini{width:48px;height:76px;}
+  .intro .name{font-size:42px;}
+  .spread-tab{min-width:120px;padding:9px 12px;}
+  .table.celtic{max-width:380px;}
+}
+@media(max-width:380px){
+  .card,.deck{width:74px;height:120px;}
+}
+</style>
+</head>
+<body>
+
+<!-- 云朵背景 -->
+<div class="sky" id="sky">
+  <div class="cloud-layer">
+    <div class="cloud c1"></div>
+    <div class="cloud c2"></div>
+    <div class="cloud c3"></div>
+    <div class="cloud c4"></div>
+  </div>
+</div>
+
+<!-- 启动屏 -->
+<div class="intro" id="intro">
+  <div class="moon"></div>
+  <div class="name">Ming Arcana</div>
+  <div class="slogan">MING ARCANA</div>
+  <div class="desc">在云端，与你的内心对话<br>选一个牌阵，提一个问题，举手抽牌</div>
+  <button class="intro-btn" id="startBtn">开 启</button>
+  <div class="privacy">摄像头仅在本地识别「举手」动作<br>画面不存储、不上传，关闭即销毁</div>
+</div>
+
+<!-- 主舞台 -->
+<div class="stage" id="stage" style="display:none">
+  <div class="topbar">
+    <div class="brand">Ming Arcana<small>MING ARCANA</small></div>
+    <div class="steps">
+      <span class="stp on" id="stp1">选阵</span>
+      <span class="stp" id="stp2">抽牌</span>
+      <span class="stp" id="stp3">解读</span>
+    </div>
+  </div>
+
+  <!-- 牌阵选择 -->
+  <div class="spread-picker" id="spreadPicker">
+    <div class="label">— 选择牌阵 —</div>
+    <div class="spread-tabs" id="spreadTabs"></div>
+  </div>
+
+  <!-- 问题输入 -->
+  <div class="question-box">
+    <input type="text" id="questionInput" placeholder="想问什么？（可留空，默认为综合指引）" maxlength="40">
+  </div>
+
+  <!-- 摄像头 -->
+  <div class="camera-wrap" id="cameraWrap">
+    <div class="video-frame">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas" style="display:none"></canvas>
+      <div class="overlay"></div>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+      <div class="hand-hint" id="handHint">举起手掌 触发抽牌</div>
+      <div class="detect-ring" id="detectRing"></div>
+    </div>
+    <div class="cam-error" id="camError">
+      <div class="ce-icon">📷</div>
+      <div class="ce-title" id="ceTitle">摄像头未开启</div>
+      <div class="ce-msg" id="ceMsg"></div>
+      <div class="ce-btns">
+        <button class="ce-btn primary" id="ceRetry">重试授权</button>
+        <button class="ce-btn ghost" id="ceSkip">不用摄像头</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 牌桌 -->
+  <div class="table" id="table"></div>
+
+  <!-- 控制区 -->
+  <div class="controls">
+    <div class="status" id="status">选好牌阵，点下方按钮开始洗牌</div>
+    <button class="btn" id="actionBtn">开始洗牌</button>
+    <div class="btn-row">
+      <button class="btn-ghost" id="toggleCamBtn" style="display:none">关闭摄像头</button>
+      <button class="btn-ghost" id="resetBtn" style="display:none">重新选阵</button>
+    </div>
+  </div>
+</div>
+
+<!-- 解读面板 -->
+<div class="reading" id="reading">
+  <div class="reading-inner">
+    <div class="reading-head">
+      <h2 id="rTitle">你的牌阵</h2>
+      <div class="r-sub" id="rSub"></div>
+      <div class="r-q" id="rQ"></div>
+    </div>
+    <div class="story" id="story"></div>
+    <div class="cards-detail" id="cardsDetail"></div>
+    <div class="r-actions">
+      <button class="btn" id="rAgain">再抽一次</button>
+      <button class="btn-ghost" id="rClose">收起</button>
+    </div>
+  </div>
+</div>
+
+<div class="privacy-tip">🔒 摄像头数据仅在本地处理，不上传服务器</div>
+
+<script>
+/* ===================== 78张韦特塔罗数据 ===================== */
+const TAROT_DECK = [
+  // ===== 大阿尔卡那 (22) =====
+  { id: 'ar00', name: '愚者', en: 'The Fool', arcana: 'major', icon: '🃏', keywords: ['新开始', '自由', '纯真', '冒险', '无限可能'],
+    upright: '一张象征全新起点的牌。你正站在未知的门槛上，怀揣纯真与勇气。不要被经验束缚，带着好奇踏入这段旅程。',
+    reversed: '鲁莽的冲动或对风险的忽视正在拖累你。也许你太过随性，缺少对后果的考量，需要重新审视自己的方向。' },
+  { id: 'ar01', name: '魔术师', en: 'The Magician', arcana: 'major', icon: '🎩', keywords: ['创造力', '行动力', '专注', '显化'],
+    upright: '你拥有将想法变为现实的所有工具。专注、意志、行动——三件武器已在手，把握当下，是时候动手了。',
+    reversed: '才华未能施展，或被人欺骗操纵。能量分散、意志动摇，需要重新校准目标，识破幻象。' },
+  { id: 'ar02', name: '女祭司', en: 'The High Priestess', arcana: 'major', icon: '🌙', keywords: ['直觉', '潜意识', '智慧', '静默'],
+    upright: '答案不在外界，而在你的内在。倾听直觉，安静下来，月亮会照亮你未看见的部分。',
+    reversed: '忽略直觉、被表象蒙蔽、秘密浮出水面。停止向外求索，回到内心深处问自己真正想要什么。' },
+  { id: 'ar03', name: '女皇', en: 'The Empress', arcana: 'major', icon: '🌸', keywords: ['丰盛', '母性', '创造力', '感官'],
+    upright: '丰盈的时刻到来，无论是感情、财富还是创意。允许自己被滋养，享受生活的美好。',
+    reversed: '过度依赖、创造力受阻、关系失衡。学会自给自足，而不是期待他人满足。' },
+  { id: 'ar04', name: '皇帝', en: 'The Emperor', arcana: 'major', icon: '👑', keywords: ['权威', '结构', '稳定', '掌控'],
+    upright: '建立秩序、设定边界、承担责任。这是通过纪律与稳定达成目标的时刻。',
+    reversed: '专制、控制欲过强或缺乏纪律。审视自己——是过于强硬还是过于松懈？' },
+  { id: 'ar05', name: '教皇', en: 'The Hierophant', arcana: 'major', icon: '📜', keywords: ['传统', '信仰', '指引', '学习'],
+    upright: '向有经验的人请教，遵循传统智慧。这是一段需要学习的时期，谦逊是打开大门的钥匙。',
+    reversed: '质疑权威、打破常规、寻找属于自己的路。不必盲从，但也要尊重积淀的智慧。' },
+  { id: 'ar06', name: '恋人', en: 'The Lovers', arcana: 'major', icon: '💞', keywords: ['爱情', '选择', '和谐', '价值观'],
+    upright: '重要的相遇或选择正在出现。这不仅是关于爱情，更是关于"什么对你真正重要"的抉择。',
+    reversed: '关系失衡、价值冲突、逃避选择。不要让短期诱惑掩盖长期价值。' },
+  { id: 'ar07', name: '战车', en: 'The Chariot', arcana: 'major', icon: '⚔️', keywords: ['胜利', '意志力', '前进', '掌控'],
+    upright: '凭意志力冲破阻碍。你已经上路，专注方向，不要被两边的杂音分心。',
+    reversed: '失去方向、内耗严重、目标模糊。先停下来重整旗鼓，再出发也不迟。' },
+  { id: 'ar08', name: '力量', en: 'Strength', arcana: 'major', icon: '🦁', keywords: ['勇气', '柔韧', '耐心', '内在力量'],
+    upright: '真正的力量不是蛮力，而是温柔地驯服内心的猛兽。你比想象中更强大。',
+    reversed: '自我怀疑、压抑情绪、过度控制。学会与自己和解，而非对抗。' },
+  { id: 'ar09', name: '隐士', en: 'The Hermit', arcana: 'major', icon: '🏮', keywords: ['内省', '独处', '智慧', '指引'],
+    upright: '退后一步，进入独处。这不是逃避，而是为了让内在的光更亮一些。',
+    reversed: '过度孤立、拒绝帮助、迷失方向。允许自己被看见，也是一种勇气。' },
+  { id: 'ar10', name: '命运之轮', en: 'Wheel of Fortune', arcana: 'major', icon: '🎡', keywords: ['转折', '命运', '循环', '机遇'],
+    upright: '命运的齿轮在转动，把握这次转折。无论好坏，变化本身是礼物。',
+    reversed: '抗阻变化、运势低迷、循环卡顿。接受无常是唯一的解药。' },
+  { id: 'ar11', name: '正义', en: 'Justice', arcana: 'major', icon: '⚖️', keywords: ['公平', '真相', '因果', '决断'],
+    upright: '因果分明，公正不偏。你的每个选择都在被如实记录——也是时候做出平衡的判断。',
+    reversed: '不公的待遇、逃避责任、判断失误。在做决定前，问自己：这是真相吗？' },
+  { id: 'ar12', name: '倒吊人', en: 'The Hanged Man', arcana: 'major', icon: '🙃', keywords: ['放下', '换视角', '等待', '牺牲'],
+    upright: '换个角度看世界。暂停不是失败，是另一种前进。',
+    reversed: '无谓的牺牲、停滞不前、抗拒放手。问自己：你在坚持的，是值得的吗？' },
+  { id: 'ar13', name: '死神', en: 'Death', arcana: 'major', icon: '💀', keywords: ['结束', '蜕变', '新生', '放下'],
+    upright: '一段旅程的结束，也是另一段旅程的开始。蜕变需要告别——勇敢松手吧。',
+    reversed: '抗拒改变、沉溺过去、缓慢过渡。是时候放下了，拖着旧壳无法长出新羽。' },
+  { id: 'ar14', name: '节制', en: 'Temperance', arcana: 'major', icon: '🕊️', keywords: ['平衡', '调和', '耐心', '中庸'],
+    upright: '慢慢来，调和两端。无论是情绪还是节奏，找到你的中间点。',
+    reversed: '失衡、过度或不足、情绪失控。回到中线，一切都不必那么极端。' },
+  { id: 'ar15', name: '恶魔', en: 'The Devil', arcana: 'major', icon: '😈', keywords: ['束缚', '欲望', '执念', '阴影'],
+    upright: '看清你被什么束缚——可能是欲望、恐惧或关系。锁链是纸做的，但你需要自己挣脱。',
+    reversed: '挣脱束缚、戒除旧习、直面阴影。觉醒的时刻到了，你比你以为的更自由。' },
+  { id: 'ar16', name: '塔', en: 'The Tower', arcana: 'major', icon: '🗼', keywords: ['突变', '崩塌', '觉醒', '震撼'],
+    upright: '震撼性的变化来临——建得不稳的东西终将倒下。这不是惩罚，是救赎。',
+    reversed: '勉强维持的崩塌、迟来的剧变、抗拒改变。接受震荡，才能重建更稳固的地基。' },
+  { id: 'ar17', name: '星星', en: 'The Star', arcana: 'major', icon: '⭐', keywords: ['希望', '灵感', '治愈', '信念'],
+    upright: '风暴之后，星星升起。保持信念，你的祈愿正在被听见。',
+    reversed: '失去信心、灵感枯竭、失望。星星仍在，只是云遮住了——再等等。' },
+  { id: 'ar18', name: '月亮', en: 'The Moon', arcana: 'major', icon: '🌕', keywords: ['幻象', '潜意识', '不安', '直觉'],
+    upright: '一切并不像表面那样。倾听你的梦境与直觉——它们在告诉你真话。',
+    reversed: '迷雾散去、真相浮现、恐惧消散。你正在走出不确定的隧道。' },
+  { id: 'ar19', name: '太阳', en: 'The Sun', arcana: 'major', icon: '☀️', keywords: ['成功', '快乐', '活力', '光明'],
+    upright: '一切明朗。快乐、成功、清晰——享受这段阳光灿烂的时光。',
+    reversed: '短暂的阴霾、过度乐观、虚假的成功。真正的阳光在乌云背后。' },
+  { id: 'ar20', name: '审判', en: 'Judgement', arcana: 'major', icon: '📯', keywords: ['觉醒', '重生', '召唤', '反思'],
+    upright: '一声召唤在响起——听见它。这是觉醒与重生的时刻，回顾过去，勇敢迈向未来。',
+    reversed: '自我批判、错失机会、回避反思。原谅过去的自己，才能听见新的召唤。' },
+  { id: 'ar21', name: '世界', en: 'The World', arcana: 'major', icon: '🌍', keywords: ['完成', '圆满', '成就', '整合'],
+    upright: '一个完整的循环即将结束。带着所有收获，你已经完整——准备好下一段旅程了吗？',
+    reversed: '未完成的事项、停滞不前、缺乏闭环。回到那件未完成的事，给它一个收尾。' },
+
+  // ===== 小阿尔卡那 - 权杖 Wands (火) =====
+  { id: 'wa01', name: '权杖一', en: 'Ace of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['灵感', '新项目', '热情', '开端'],
+    upright: '灵感的火花点燃。一段充满热情与创造力的旅程即将开始，行动吧。',
+    reversed: '计划延迟、热情消退、灵感枯竭。重新点燃内心的火种。' },
+  { id: 'wa02', name: '权杖二', en: 'Two of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['规划', '决策', '远见', '选择'],
+    upright: '手握世界之钥，规划下一步。从更高的视角看全局。',
+    reversed: '规划不足、害怕未知、决策犹豫。迈出舒适圈，世界会更大。' },
+  { id: 'wa03', name: '权杖三', en: 'Three of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['拓展', '远见', '等待', '海外'],
+    upright: '播种的种子即将结果。继续远眺，扩大你的视野与合作。',
+    reversed: '计划受挫、视野受限、缺乏耐心。重新校准长期目标。' },
+  { id: 'wa04', name: '权杖四', en: 'Four of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['庆祝', '家庭', '稳定', '和谐'],
+    upright: '值得庆祝的时刻。家庭、归属、稳定——享受这份安定。',
+    reversed: '家庭冲突、缺乏归属、过渡期。重建内心的"家"。' },
+  { id: 'wa05', name: '权杖五', en: 'Five of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['冲突', '竞争', '分歧', '挑战'],
+    upright: '观点的碰撞在所难免。把冲突视为成长，而非威胁。',
+    reversed: '冲突结束、避免对抗、内在斗争。区分哪些仗值得打。' },
+  { id: 'wa06', name: '权杖六', en: 'Six of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['胜利', '认可', '成就', '荣耀'],
+    upright: '你的努力被看见了。享受这份胜利，但也别忘了感谢同路人。',
+    reversed: '不被认可、胜利延迟、骄傲阻碍。胜利在来的路上。' },
+  { id: 'wa07', name: '权杖七', en: 'Seven of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['坚持', '防守', '立场', '挑战'],
+    upright: '坚持自己的立场。你有理由继续战斗——别轻易退让。',
+    reversed: '防御过度、孤立无援、精疲力竭。允许自己退一步重整。' },
+  { id: 'wa08', name: '权杖八', en: 'Eight of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['迅速', '行动', '进展', '消息'],
+    upright: '事情进展神速，消息即将到来。保持敏锐，不要错过节奏。',
+    reversed: '延迟、匆忙、节奏失控。让事情按自己的速度展开。' },
+  { id: 'wa09', name: '权杖九', en: 'Nine of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['坚韧', '坚持', '警惕', '最后一搏'],
+    upright: '你已经走了很远，再坚持一下——胜利就在转角。',
+    reversed: '疲惫投降、过度警惕、固执。休息不是放弃，是为了走得更远。' },
+  { id: 'wa10', name: '权杖十', en: 'Ten of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['负担', '责任', '压力', '坚持'],
+    upright: '你扛了很多，是时候放下一些。委托他人，为自己减负。',
+    reversed: '卸下重担、拒绝责任、放弃任务。学会说"不"。' },
+  { id: 'wa11', name: '权杖侍从', en: 'Page of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['热情', '探索', '消息', '年轻'],
+    upright: '充满好奇心与活力。一段令人兴奋的探索即将开始。',
+    reversed: '虎头蛇尾、缺乏方向、过度狂热。聚焦于一两个真正想做的事。' },
+  { id: 'wa12', name: '权杖骑士', en: 'Knight of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['冲动', '行动', '冒险', '能量'],
+    upright: '充满力量的行动者。勇敢前行，但留心不要被热情冲昏头。',
+    reversed: '鲁莽冲动、缺乏耐心、半途而废。三思后再跃。' },
+  { id: 'wa13', name: '权杖皇后', en: 'Queen of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['自信', '魅力', '独立', '热情'],
+    upright: '你拥有温暖他人的力量。独立、有主见、富有魅力。',
+    reversed: '自我中心、嫉妒、控制。回归内在的自信，而非外界的掌控。' },
+  { id: 'wa14', name: '权杖国王', en: 'King of Wands', arcana: 'minor', suit: 'wands', icon: '🔥', keywords: ['领导', '远见', '权威', '决断'],
+    upright: '用你的远见和热情带领他人。这是属于你的舞台。',
+    reversed: '独断专行、急躁、滥用权力。让领导力服务于他人。' },
+
+  // ===== 小阿尔卡那 - 圣杯 Cups (水) =====
+  { id: 'cu01', name: '圣杯一', en: 'Ace of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['新感情', '爱', '情感', '直觉'],
+    upright: '情感的新起点。爱的酒杯已满，准备好被爱了吗？',
+    reversed: '情感压抑、爱被阻隔、内心封闭。允许自己被触碰。' },
+  { id: 'cu02', name: '圣杯二', en: 'Two of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['伙伴', '和谐', '连接', '相互'],
+    upright: '两颗心相遇。平等、互敬、连接——这是关系最美的状态。',
+    reversed: '关系失衡、沟通破裂、不对等。回到对话的初心。' },
+  { id: 'cu03', name: '圣杯三', en: 'Three of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['友谊', '庆祝', '团聚', '欢乐'],
+    upright: '值得庆祝的友谊时刻。和志同道合的人共享喜悦。',
+    reversed: '社交过载、孤立、友尽。质量比数量更重要。' },
+  { id: 'cu04', name: '圣杯四', en: 'Four of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['冷漠', '沉思', '错失', '倦怠'],
+    upright: '也许你太专注于自己，错过了眼前的礼物。抬头看看。',
+    reversed: '重新投入、接受机会、走出倦怠。新鲜感正在回来。' },
+  { id: 'cu05', name: '圣杯五', en: 'Five of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['失落', '悲伤', '遗憾', '看向杯中'],
+    upright: '失去令人痛，但别忘了还有两杯满的。允许悲伤，但别忘了希望。',
+    reversed: '走出悲伤、宽恕、释怀。是时候翻过这一页了。' },
+  { id: 'cu06', name: '圣杯六', en: 'Six of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['怀旧', '童年', '纯真', '回忆'],
+    upright: '回到纯真的时光。也许一份来自过去的温柔在召唤你。',
+    reversed: '困在过去、停滞、过度理想化。带着童心，但别被困住。' },
+  { id: 'cu07', name: '圣杯七', en: 'Seven of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['幻想', '选择', '诱惑', '愿景'],
+    upright: '选择太多反而让人迷茫。问自己：哪个最接近真实的渴望？',
+    reversed: '看清幻象、做出选择、聚焦。看清哪些是想象，哪些是真正想要的。' },
+  { id: 'cu08', name: '圣杯八', en: 'Eight of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['离开', '寻找', '放下', '新路'],
+    upright: '是时候离开已经不再滋养你的东西了。勇敢地踏上新路。',
+    reversed: '害怕离开、犹豫不决、困在原地。有时候留下来是勇气，但更多时候，离开才是。' },
+  { id: 'cu09', name: '圣杯九', en: 'Nine of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['满足', '愿望成真', '享受', '感恩'],
+    upright: '愿望成真的时刻。享受这份丰盛，记得感恩。',
+    reversed: '浅层满足、欲望过盛、空虚。真正的满足来自内心。' },
+  { id: 'cu10', name: '圣杯十', en: 'Ten of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['幸福', '圆满', '家庭', '和谐'],
+    upright: '情感的最高圆满。家庭、爱、归属——你正在体验最深的幸福。',
+    reversed: '关系破裂、价值观冲突、不和谐。先照顾好自己的心。' },
+  { id: 'cu11', name: '圣杯侍从', en: 'Page of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['敏感', '创意', '浪漫', '消息'],
+    upright: '一个温柔的信息或灵感正在到来。保持敏感与开放。',
+    reversed: '情绪化、不成熟、敏感过度。学会区分信号与噪音。' },
+  { id: 'cu12', name: '圣杯骑士', en: 'Knight of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['浪漫', '理想', '情感', '追求'],
+    upright: '带着真心去追求。浪漫的提议或情感的邀约正在靠近。',
+    reversed: '情绪化、逃避现实、过度理想。让浪漫落地。' },
+  { id: 'cu13', name: '圣杯皇后', en: 'Queen of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['共情', '直觉', '情感智慧', '温柔'],
+    upright: '你拥有理解他人内心的天赋。用温柔与共情去照亮他人。',
+    reversed: '情绪失控、过度共情、被情绪淹没。设立健康的边界。' },
+  { id: 'cu14', name: '圣杯国王', en: 'King of Cups', arcana: 'minor', suit: 'cups', icon: '💧', keywords: ['情感成熟', '智慧', '平衡', '包容'],
+    upright: '在情绪的海洋中保持平静。你既能感受，也能不被淹没。',
+    reversed: '情绪操控、内在混乱、冷漠。让情绪自然流动。' },
+
+  // ===== 小阿尔卡那 - 宝剑 Swords (风) =====
+  { id: 'sw01', name: '宝剑一', en: 'Ace of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['清晰', '真相', '突破', '新想法'],
+    upright: '思维的利剑划破迷雾。真相浮现，做出清晰决定。',
+    reversed: '思维混乱、真相被遮蔽、决策迟缓。慢下来，整理思路。' },
+  { id: 'sw02', name: '宝剑二', en: 'Two of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['僵局', '选择', '平衡', '盲点'],
+    upright: '两难境地。摘下眼罩，看见你回避的部分。',
+    reversed: '做出决定、看清局面、打破僵局。你已经知道了答案。' },
+  { id: 'sw03', name: '宝剑三', en: 'Three of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['心碎', '伤痛', '释放', '真相'],
+    upright: '心痛难以避免。允许自己感受，然后让它流过。',
+    reversed: '愈合中、释放痛苦、宽恕。伤口在慢慢合上。' },
+  { id: 'sw04', name: '宝剑四', en: 'Four of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['休息', '恢复', '内省', '暂停'],
+    upright: '暂停不是软弱，是智慧。让自己休息，才能再次出发。',
+    reversed: '焦虑失眠、过度休息、不愿停止。找到真正的休息。' },
+  { id: 'sw05', name: '宝剑五', en: 'Five of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['冲突', '代价', '胜利之空', '骄傲'],
+    upright: '赢了战役，输了战争吗？有些胜利并不值得。',
+    reversed: '和解、放下执念、寻求共赢。退一步海阔天空。' },
+  { id: 'sw06', name: '宝剑六', en: 'Six of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['过渡', '迁移', '疗愈', '向前'],
+    upright: '离开困境的过渡期。带着教训，前往更平静的港湾。',
+    reversed: '困在过去、无法前行、回到旧地。真正地告别才能启程。' },
+  { id: 'sw07', name: '宝剑七', en: 'Seven of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['策略', '欺骗', '机智', '风险'],
+    upright: '聪明行事，但问自己：这是真正的智慧还是逃避？',
+    reversed: '真相曝光、坦白、回归真诚。最长的路是捷径。' },
+  { id: 'sw08', name: '宝剑八', en: 'Eight of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['被困', '自我限制', '无力', '束缚'],
+    upright: '你以为的束缚，多半是自己想象的。睁眼看看，绑住你的绳索其实是松的。',
+    reversed: '解脱、看清真相、释放自我。你比你以为的更自由。' },
+  { id: 'sw09', name: '宝剑九', en: 'Nine of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['焦虑', '担忧', '失眠', '恐惧'],
+    upright: '夜深人静时的恐惧被放大。问自己：这是真实的吗？还是想象？',
+    reversed: '走出焦虑、寻求帮助、释放担忧。黎明一定会来。' },
+  { id: 'sw10', name: '宝剑十', en: 'Ten of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['结束', '触底', '新开始', '放下'],
+    upright: '触底就是反弹。结束意味着新故事的开始。',
+    reversed: '缓慢复苏、坚持不再、不愿放手。接受结束才能开始。' },
+  { id: 'sw11', name: '宝剑侍从', en: 'Page of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['好奇', '学习', '警觉', '新想法'],
+    upright: '带着好奇去探索。提问与学习是这把剑的锋芒。',
+    reversed: '八卦、肤浅、说得多做得少。让行动配得上思考。' },
+  { id: 'sw12', name: '宝剑骑士', en: 'Knight of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['勇敢', '行动', '直接', '冲劲'],
+    upright: '快速而果断地行动。勇气是向前冲的力量。',
+    reversed: '鲁莽冲动、言语伤人、失控。慢一点，让剑锋对准目标而非人心。' },
+  { id: 'sw13', name: '宝剑皇后', en: 'Queen of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['独立', '清晰', '直接', '智慧'],
+    upright: '用清晰的头脑和温柔的心去表达。你的话语有力量。',
+    reversed: '冷漠、严苛、孤立。温柔一点，世界会更柔软地回应。' },
+  { id: 'sw14', name: '宝剑国王', en: 'King of Swords', arcana: 'minor', suit: 'swords', icon: '⚔️', keywords: ['理性', '权威', '公正', '智慧'],
+    upright: '用理性与公正做出判断。你是混乱中的定海神针。',
+    reversed: '专制、滥用智力、冷漠。让智慧配以慈悲。' },
+
+  // ===== 小阿尔卡那 - 星币 Pentacles (土) =====
+  { id: 'pe01', name: '星币一', en: 'Ace of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['新机会', '财富', '物质', '种子'],
+    upright: '一个物质层面的新机会正在萌芽。种下种子，用心浇灌。',
+    reversed: '错失机会、缺乏规划、财务不稳。回到基本面。' },
+  { id: 'pe02', name: '星币二', en: 'Two of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['平衡', '灵活', '多任务', '适应'],
+    upright: '在多个事务中灵活切换。平衡的艺术就在这里。',
+    reversed: '失衡、过载、顾此失彼。学会取舍，而非什么都抓。' },
+  { id: 'pe03', name: '星币三', en: 'Three of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['合作', '技能', '团队', '建设'],
+    upright: '合作的力量大于个人。与团队一起，能建造更伟大的事物。',
+    reversed: '团队不和、缺乏技能、独自硬撑。寻求合作，但也要提升自己。' },
+  { id: 'pe04', name: '星币四', en: 'Four of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['稳定', '保守', '持有', '安全'],
+    upright: '守住已有的成果。但也别让"安全"成为限制。',
+    reversed: '过度吝啬、害怕失去、卡在物质里。流动才能带来丰盛。' },
+  { id: 'pe05', name: '星币五', en: 'Five of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['困境', '孤立', '匮乏', '求助'],
+    upright: '感到匮乏与孤立是真实的，但请抬头——门就在你身边，只是没看见。',
+    reversed: '走出困境、获得帮助、回暖。允许自己接受支持。' },
+  { id: 'pe06', name: '星币六', en: 'Six of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['给予', '慷慨', '分享', '平衡'],
+    upright: '给予与接受的平衡。无论是付出还是接受，都需要勇气。',
+    reversed: '不平等的给予、施舍心态、债务。回到平衡的交换。' },
+  { id: 'pe07', name: '星币七', en: 'Seven of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['耐心', '评估', '成长', '等待'],
+    upright: '评估你的努力。耐心等待——种下的不会马上开花。',
+    reversed: '急功近利、失去耐心、方向错误。停下来重新评估。' },
+  { id: 'pe08', name: '星币八', en: 'Eight of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['技艺', '专注', '勤奋', '精进'],
+    upright: '专注打磨技艺。重复中的精进，是通向大师的路。',
+    reversed: '低质量重复、缺乏热情、机械。找回这份工作的意义。' },
+  { id: 'pe09', name: '星币九', en: 'Nine of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['独立', '丰盛', '自给自足', '优雅'],
+    upright: '你通过自己的努力获得了丰盛。享受这份独立与优雅。',
+    reversed: '依赖他人、过度消费、虚假体面。回到真正的丰盛。' },
+  { id: 'pe10', name: '星币十', en: 'Ten of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['传承', '财富', '家庭', '长期'],
+    upright: '长期稳定的丰盛。家庭、传承、积累——你的根基稳固。',
+    reversed: '家庭冲突、财富不稳、短视。回到长期视角。' },
+  { id: 'pe11', name: '星币侍从', en: 'Page of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['学习', '新机会', '踏实', '开始'],
+    upright: '一个踏实的新开始。学习、积累、慢慢来。',
+    reversed: '拖延、缺乏目标、不踏实。迈出第一步，比想象更重要。' },
+  { id: 'pe12', name: '星币骑士', en: 'Knight of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['稳健', '可靠', '坚持', '节奏'],
+    upright: '稳步前进，不急不躁。可靠是一种难得的品质。',
+    reversed: '停滞、固执、过于保守。有时需要打破自己的节奏。' },
+  { id: 'pe13', name: '星币皇后', en: 'Queen of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['丰盛', '养育', '实际', '温柔'],
+    upright: '用实际行动滋养他人和你自己。丰盛不是拥有，是分享。',
+    reversed: '过度工作、忽视自己、失衡。先照顾好自己才能照顾别人。' },
+  { id: 'pe14', name: '星币国王', en: 'King of Pentacles', arcana: 'minor', suit: 'pentacles', icon: '🌿', keywords: ['成功', '稳定', '权威', '富足'],
+    upright: '通过长期努力达成稳定与成功。你是你自己王国的国王。',
+    reversed: '物质主义、贪婪、固执。财富之外，还有更深的价值。' }
+];
+/* ===================== 牌阵定义 ===================== */
+const SPREADS = {
+  single: {
+    name: '单张速答', meta: '1张 · 直问直答', count: 1, layout: 'flex',
+    positions: [{ key:'core', label:'此刻指引' }]
+  },
+  three: {
+    name: '时间之流', meta: '3张 · 过去·现在·未来', count: 3, layout: 'flex',
+    positions: [
+      { key:'past',    label:'过去 · 来路' },
+      { key:'present', label:'现在 · 此刻' },
+      { key:'future',  label:'未来 · 去向' }
+    ]
+  },
+  relation: {
+    name: '关系之镜', meta: '5张 · 看清你与他', count: 5, layout: 'flex',
+    positions: [
+      { key:'you',      label:'你的状态' },
+      { key:'them',     label:'对方状态' },
+      { key:'bond',     label:'你们之间' },
+      { key:'obstacle', label:'横亘的课题' },
+      { key:'outcome',  label:'关系走向' }
+    ]
+  },
+  celtic: {
+    name: '凯尔特十字', meta: '10张 · 全局深度', count: 10, layout: 'celtic',
+    positions: [
+      { key:'core',   label:'现况', cls:'s-core' },
+      { key:'cross',  label:'挑战', cls:'s-cross' },
+      { key:'found',  label:'根基', cls:'s-found' },
+      { key:'past',   label:'近期过去', cls:'s-past' },
+      { key:'crown',  label:'意识目标', cls:'s-crown' },
+      { key:'near',   label:'近期未来', cls:'s-near' },
+      { key:'self',   label:'自我态度', cls:'s-staff1' },
+      { key:'env',    label:'外在环境', cls:'s-staff2' },
+      { key:'hope',   label:'希望与恐惧', cls:'s-staff3' },
+      { key:'result', label:'最终结果', cls:'s-staff4' }
+    ]
+  }
+};
+
+/* ===================== 解读引擎（故事性叙事） ===================== */
+// 工具：取牌的方向化关键词与短意
+function meaning(c){ return c.reversed ? c.reversed : c.upright; }
+function shortKeys(c){ return (c.keywords||[]).slice(0,3).join('、'); }
+function arcanaWeight(deck){ // 大牌占比 → 命运感
+  const majors = deck.filter(c=>c.arcana==='major').length;
+  return majors / deck.length;
+}
+function suitTone(deck){ // 主导花色 → 议题底色
+  const cnt={wands:0,cups:0,swords:0,pentacles:0};
+  deck.forEach(c=>{ if(c.suit) cnt[c.suit]++; });
+  const max=Math.max(cnt.wands,cnt.cups,cnt.swords,cnt.pentacles);
+  if(max===0) return null;
+  if(cnt.cups===max) return {suit:'cups', word:'情感与关系'};
+  if(cnt.swords===max) return {suit:'swords', word:'思绪与抉择'};
+  if(cnt.wands===max) return {suit:'wands', word:'行动与热情'};
+  return {suit:'pentacles', word:'现实与积累'};
+}
+// 连接词库（避免机械）
+const CONNECT = ['于是','因此','也正因如此','顺着这股力量','而','接着','慢慢地','这时'];
+const SOFT = ['或许','也许','我感觉','似乎','你心里大概清楚','别急着否认'];
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+// 主入口：根据牌阵类型生成故事 HTML
+function buildStory(spreadKey, cards, question){
+  const q = question && question.trim() ? question.trim() : '';
+  const tone = suitTone(cards);
+  const fate = arcanaWeight(cards);
+  let html = '';
+
+  if(spreadKey==='single'){
+    html = storySingle(cards[0], q, tone);
+  } else if(spreadKey==='three'){
+    html = storyThree(cards, q, tone);
+  } else if(spreadKey==='relation'){
+    html = storyRelation(cards, q, tone);
+  } else if(spreadKey==='celtic'){
+    html = storyCeltic(cards, q, tone, fate);
+  }
+
+  // 尾声：花色/命运感的整体提点
+  let coda = '';
+  if(tone){
+    coda += `这一摊牌里，<span class="accent">${tone.word}</span>的气息最浓——它提示你，眼下真正在牵动你的，是这一块。`;
+  }
+  if(fate>0.5){
+    coda += `而大阿尔卡那接连出现，说明这并非一桩小事，是命运在推着你走一段必经的路；你能做的不是抗拒，是看清它、然后顺势而为。`;
+  } else if(fate===0){
+    coda += `牌面几乎都是小牌，这是个好消息：局面大体握在你自己手里，一步一步来，结果由你定。`;
+  }
+  if(coda) html += `<p>${coda}</p>`;
+  return html;
+}
+
+function orientWord(c){ return c.reversed ? '逆位' : '正位'; }
+
+// —— 单张
+function storySingle(c, q, tone){
+  let p1 = q
+    ? `你问的是「${esc(q)}」。牌面给你的回答，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`
+    : `这一刻为你翻开的，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`;
+  let p2 = `${meaning(c)}`;
+  let p3 = c.reversed
+    ? `逆位不是坏事，它更像一面镜子，照出你此刻卡住的地方。${pick(SOFT)}，你需要的不是更用力，而是换个方向松一松。`
+    : `${pick(SOFT)}你心里其实已经有了方向，这张牌只是替你把它说出口——${shortKeys(c)}，就是接下来值得你信任的能量。`;
+  return `<h3>给你的回答</h3><p>${p1}</p><p>${p2}</p><p>${p3}</p>`;
+}
+
+// —— 三牌阵：过去→现在→未来 叙事弧
+function storyThree(cards, q, tone){
+  const [past, now, fut] = cards;
+  let head = q ? `关于「${esc(q)}」，让我把这三张牌连成一段你的故事——` : `让我把这三张牌连成一段你的故事——`;
+  let p1 = `故事要从<span class="ghost-name">${past.name}（${orientWord(past)}）</span>说起。${meaning(past)}这是你的来路，是把你带到今天这一步的那股力量。`;
+  let p2 = `${pick(CONNECT)}，来到当下：<span class="ghost-name">${now.name}（${orientWord(now)}）</span>。${meaning(now)}${past.arcana==='major'&&now.arcana==='major' ? '过去与现在都落在大牌上，说明这是一段你绕不开的人生功课，不是一时心血来潮。' : '这就是你此刻真正站着的位置。'}`;
+  let bridge = relate(now, fut);
+  let p3 = `那往哪里去呢？<span class="ghost-name">${fut.name}（${orientWord(fut)}）</span>。${meaning(fut)}${bridge}`;
+  let p4 = fut.reversed
+    ? `未来这张是逆位，别慌——它不是给你判决，是给你提醒：如果照现在的惯性走，容易卡在这里。换个心态，结局就会跟着改写。`
+    : `这是一个值得你往前走的方向。${pick(SOFT)}，你已经隐约感觉到了，对吗？`;
+  return `<h3>你的故事</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p>`;
+}
+
+// 两张牌之间的关系过渡句
+function relate(a, b){
+  if(a.suit && b.suit && a.suit===b.suit) return '两张牌同属一个花色，能量是连贯的——你正走在同一条线上，没有跑偏。';
+  if(a.arcana==='major' && b.arcana==='minor') return '从大牌走到小牌，意味着宏大的转折正在落到具体的日常里——抽象的命运，开始变成你能动手的事。';
+  if(a.arcana==='minor' && b.arcana==='major') return '从小事走向大牌，说明眼前这件具体的事，会把你推向一个更大的转折，别小看它。';
+  if(a.reversed && !b.reversed) return '从逆到正，是一条由堵到通的路——你正在解开一个结。';
+  if(!a.reversed && b.reversed) return '由正转逆，提醒你前路有个需要留心的坎，提前看见就不至于被绊倒。';
+  return '这两股能量之间有张力，而张力恰恰是故事往前走的动力。';
+}
+
+// —— 关系之镜（5张）
+function storyRelation(cards, q, tone){
+  const [you, them, bond, obs, out] = cards;
+  let head = q ? `关于「${esc(q)}」这段关系，牌为你照出了五个面——` : `这面镜子，照出了你们关系的五个面——`;
+  let p1 = `先看你自己：<span class="ghost-name">${you.name}（${orientWord(you)}）</span>。${meaning(you)}这是你带进这段关系里的状态。`;
+  let p2 = `再看对方：<span class="ghost-name">${them.name}（${orientWord(them)}）</span>。${meaning(them)}${relate(you,them)}`;
+  let p3 = `而你们之间真正流动的，是<span class="ghost-name">${bond.name}（${orientWord(bond)}）</span>。${meaning(bond)}`;
+  let p4 = `当然，关系里总有功课。横在你们面前的是<span class="ghost-name">${obs.name}（${orientWord(obs)}）</span>。${meaning(obs)}${pick(SOFT)}，这一点你们彼此都心知肚明，只是谁先开口的问题。`;
+  let p5 = `若顺着现在的节奏走下去，关系会走向<span class="ghost-name">${out.name}（${orientWord(out)}）</span>。${meaning(out)}${out.reversed?'逆位的结果不是终点，是叉路口——你们还有机会换条路走。':'这是个温柔的结果，值得你为之用心经营。'}`;
+  return `<h3>关系之镜</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p><p>${p5}</p>`;
+}
+
+// —— 凯尔特十字（10张，分段讲故事）
+function storyCeltic(cards, q, tone, fate){
+  const m = {}; // 按位置key索引
+  SPREADS.celtic.positions.forEach((pos,i)=>{ m[pos.key]=cards[i]; });
+  let head = q ? `关于「${esc(q)}」，凯尔特十字摊开了完整的全貌。我不逐张念，而是把它读成一个故事——` : `凯尔特十字摊开了完整的全貌。我把它读成一个故事——`;
+
+  // 第一幕：核心张力（现况 vs 挑战）
+  let act1 = `<h3>第一幕 · 此刻的核心</h3>`;
+  act1 += `<p>整件事的圆心，是<span class="ghost-name">${m.core.name}（${orientWord(m.core)}）</span>——${meaning(m.core)}而横在它正上方、让事情变复杂的那股力量，是<span class="ghost-name">${m.cross.name}（${orientWord(m.cross)}）</span>。${meaning(m.cross)}</p>`;
+  act1 += `<p>这两张牌的拉扯，就是你整个问题的主题：一边是你的现况，一边是你必须面对的课题。${pick(SOFT)}，先把这组张力看明白，后面的牌才有依托。</p>`;
+
+  // 第二幕：时间线（根基→过去→现况→近未来）
+  let act2 = `<h3>第二幕 · 来龙与去脉</h3>`;
+  act2 += `<p>往下挖，事情的根基藏着<span class="ghost-name">${m.found.name}（${orientWord(m.found)}）</span>——${meaning(m.found)}这是水面之下的远因，常常连你自己都没太察觉。</p>`;
+  act2 += `<p>${pick(CONNECT)}，刚刚过去、正在淡出的是<span class="ghost-name">${m.past.name}（${orientWord(m.past)}）</span>。${meaning(m.past)}它是上一个章节，已经在退场，但余温还在。</p>`;
+  act2 += `<p>而你抬头看见、有意识在追求的目标，是<span class="ghost-name">${m.crown.name}（${orientWord(m.crown)}）</span>。${meaning(m.crown)}${tensionCheck(m.found,m.crown)}</p>`;
+  act2 += `<p>接下来几周即将浮现的，是<span class="ghost-name">${m.near.name}（${orientWord(m.near)}）</span>。${meaning(m.near)}这是故事的下一页，不是结局。</p>`;
+
+  // 第三幕：内在到外在到结果（权杖柱）
+  let act3 = `<h3>第三幕 · 你如何走到结局</h3>`;
+  act3 += `<p>这段旅程里，你看待自己的方式是<span class="ghost-name">${m.self.name}（${orientWord(m.self)}）</span>。${meaning(m.self)}这是你的镜头——但镜头里的你，未必是全部的真相。</p>`;
+  act3 += `<p>你身处的环境、你掌控不了的外力，是<span class="ghost-name">${m.env.name}（${orientWord(m.env)}）</span>。${meaning(m.env)}</p>`;
+  act3 += `<p>最深的一张，是希望与恐惧——<span class="ghost-name">${m.hope.name}（${orientWord(m.hope)}）</span>。${meaning(m.hope)}你最渴望的和最害怕的，往往是同一件事；看懂这张，常常就是整个解读最亮的那束光。</p>`;
+  act3 += `<p>最后，如果一切顺着现在的能量走下去，路会通向<span class="ghost-name">${m.result.name}（${orientWord(m.result)}）</span>。${meaning(m.result)}${m.result.reversed?'但记住，逆位的结果从来不是判决书——你前面九张牌里的每一个选择，都在悄悄改写它。':'这是当前轨迹下最可能的落点。它不是命定，而是你此刻方向的自然延伸——想要它，就守住现在的节奏。'}</p>`;
+
+  return head ? `<p>${head}</p>${act1}${act2}${act3}` : `${act1}${act2}${act3}`;
+}
+// 根基 vs 目标 的内外一致性检查
+function tensionCheck(found, crown){
+  if(found.suit && crown.suit && found.suit===crown.suit) return '根基和目标同属一种能量，说明你的内在和愿望是统一的——这是一种难得的笃定。';
+  if(found.reversed !== crown.reversed) return '有意思的是，潜意识的根基和意识的目标，一正一逆——你想要的，和你深处真正驱动你的，可能并不完全是一回事。这处错位，正是这次牌阵要你看见的。';
+  return '把这两张放在一起看：你头顶的愿望，和你脚下的根基，是否真的朝着同一个方向？';
+}
+
+// 简单转义
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ===================== 状态 ===================== */
+const state = {
+  spread: 'three',
+  phase: 'idle',     // idle | shuffling | ready | drawing | drawn
+  stream: null,
+  detectorRunning: false,
+  drawnCards: [],
+  drawIndex: 0,
+  holdFrames: 0,
+  camActive: false
+};
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+/* ===================== 初始化牌阵选择 ===================== */
+function renderSpreadTabs(){
+  const wrap = $('spreadTabs');
+  wrap.innerHTML = '';
+  Object.entries(SPREADS).forEach(([key,sp])=>{
+    const el = document.createElement('div');
+    el.className = 'spread-tab' + (key===state.spread?' active':'');
+    el.dataset.key = key;
+    el.innerHTML = `<div class="st-name">${sp.name}</div><div class="st-meta">${sp.meta}</div>`;
+    el.addEventListener('click', ()=>{
+      if(state.phase==='shuffling'||state.phase==='drawing') return;
+      state.spread = key;
+      renderSpreadTabs();
+      resetTable();
+    });
+    wrap.appendChild(el);
+  });
+}
+
+function resetTable(){
+  state.phase='idle';
+  state.drawnCards=[];
+  state.drawIndex=0;
+  $('table').className='table';
+  $('table').innerHTML='';
+  $('actionBtn').disabled=false;
+  $('actionBtn').textContent='开始洗牌';
+  $('resetBtn').style.display='none';
+  setStep(1);
+  setStatus('已选择「<span class="hl">'+SPREADS[state.spread].name+'</span>」，点下方按钮开始洗牌');
+}
+
+/* ===================== 步骤指示 ===================== */
+function setStep(n){
+  [1,2,3].forEach(i=>{ $('stp'+i).classList.toggle('on', i<=n); });
+}
+function setStatus(html){ $('status').innerHTML = html; }
+
+/* ===================== 摄像头 ===================== */
+async function startCamera(){
+  $('camError').classList.remove('show');
+  // —— 前置环境检测，给出精确原因，避免模糊报错 ——
+  const secure = window.isSecureContext || location.hostname==='localhost' || location.hostname==='127.0.0.1';
+  if(!secure){
+    showCamErrorManual('需要安全链接才能用摄像头',
+      '当前地址是「'+location.protocol+'」。浏览器只允许在 https 或 localhost 下调用摄像头。请用分享的 https 链接打开本页（不要直接双击本地文件）。');
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showCamErrorManual('当前浏览器不支持摄像头',
+      '请换用最新版 Chrome / Edge / Safari 打开；若在 App 内置浏览器（微信/QQ）中打开，请点右上角「在浏览器中打开」。');
+    return;
+  }
+  try{
+    state.stream = await navigator.mediaDevices.getUserMedia({ video:{facingMode:'user',width:640,height:480}, audio:false });
+    const v=$('video'); v.srcObject=state.stream;
+    await new Promise(r=>v.onloadedmetadata=r);
+    state.camActive=true;
+    $('toggleCamBtn').style.display='inline-block';
+    $('toggleCamBtn').textContent='关闭摄像头';
+    $('handHint').classList.add('show');
+    startDetection();
+  }catch(err){
+    state.camActive=false;
+    showCamError(err);
+  }
+}
+function showCamError(err){
+  let title='摄像头未开启', msg='';
+  const name = err && err.name ? err.name : '';
+  if(name==='NotAllowedError'||name==='SecurityError'){
+    title='摄像头权限被拒绝';
+    msg='请点击地址栏左侧的「🔒 / 摄像头」图标，把摄像头改为「允许」，再点重试。';
+  }else if(name==='NotFoundError'||name==='DevicesNotFoundError'){
+    title='没有检测到摄像头';
+    msg='这台设备似乎没有可用的摄像头，可以直接「点击牌堆」来抽牌。';
+  }else if(name==='NotReadableError'||name==='TrackStartError'){
+    title='摄像头被占用';
+    msg='摄像头可能被其它程序（如视频会议）占用，关闭它们后再重试。';
+  }else if(location.protocol==='file:'){
+    title='需要用 https 链接打开';
+    msg='浏览器只允许在 https 或 localhost 下使用摄像头。请用分享链接打开本页。';
+  }else{
+    msg='无法开启摄像头，可直接「点击牌堆」抽牌。';
+  }
+  $('ceTitle').textContent=title;
+  $('ceMsg').textContent=msg;
+  $('camError').classList.add('show');
+  $('handHint').classList.remove('show');
+  setStatus('未用摄像头，可<span class="hl">点击牌堆</span>抽牌');
+}
+function showCamErrorManual(title,msg){
+  $('ceTitle').textContent=title;
+  $('ceMsg').textContent=msg;
+  $('camError').classList.add('show');
+  $('handHint').classList.remove('show');
+  state.camActive=false;
+  setStatus('未用摄像头，可<span class="hl">点击牌堆</span>抽牌');
+}
+function toggleCamera(){
+  if(state.camActive){
+    if(state.stream) state.stream.getTracks().forEach(t=>t.stop());
+    state.stream=null; state.camActive=false; state.detectorRunning=false;
+    $('video').srcObject=null;
+    $('toggleCamBtn').textContent='开启摄像头';
+    $('handHint').classList.remove('show');
+    setStatus('摄像头已关闭，可<span class="hl">点击牌堆</span>抽牌');
+  }else{
+    startCamera();
+  }
+}
+
+// 肤色检测：判断画面上半区是否有手部聚集
+function startDetection(){
+  if(state.detectorRunning) return;
+  state.detectorRunning=true;
+  const v=$('video'), cv=$('canvas');
+  cv.width=120; cv.height=90;
+  const ctx=cv.getContext('2d',{willReadFrequently:true});
+  const loop=()=>{
+    if(!state.detectorRunning||!state.camActive){ return; }
+    try{
+      ctx.drawImage(v,0,0,cv.width,cv.height);
+      const data=ctx.getImageData(0,0,cv.width,Math.floor(cv.height*0.55)).data; // 上半区
+      let skin=0,total=0;
+      for(let i=0;i<data.length;i+=4){
+        const r=data[i],g=data[i+1],b=data[i+2];
+        total++;
+        if(r>95&&g>40&&b>20&&r>g&&r>b&&(Math.max(r,g,b)-Math.min(r,g,b))>15&&Math.abs(r-g)>15){ skin++; }
+      }
+      const ratio=skin/total;
+      const ring=$('detectRing');
+      if(state.phase==='ready'){
+        if(ratio>0.10){
+          ring.classList.add('active');
+          state.holdFrames++;
+          if(state.holdFrames>=12){ // 约0.8s
+            ring.classList.add('locked');
+            state.holdFrames=0;
+            triggerDraw();
+          }
+        }else{
+          ring.classList.remove('active','locked');
+          state.holdFrames=Math.max(0,state.holdFrames-2);
+        }
+      }
+    }catch(e){}
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+/* ===================== 洗牌 / 抽牌 ===================== */
+function shuffleDeck(){
+  const d=TAROT_DECK.map(c=>({...c, reversed: Math.random()<0.42}));
+  for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
+  return d;
+}
+
+async function startShuffle(){
+  state.phase='shuffling';
+  $('actionBtn').disabled=true;
+  $('resetBtn').style.display='none';
+  setStep(2);
+  setStatus('洗牌中…让牌接住你此刻的心绪');
+  // 渲染牌堆并做洗牌动效
+  const table=$('table');
+  table.className='table';
+  table.innerHTML='';
+  const deck=document.createElement('div');
+  deck.className='deck';
+  deck.id='deck';
+  for(let i=0;i<6;i++){
+    const dc=document.createElement('div');
+    dc.className='deck-card'+(i===5?' deck-top':'');
+    dc.style.cssText=`background:linear-gradient(135deg,#5b8dd0,#3b6fb0);border:2px solid rgba(255,255,255,0.85);transform:translate(${i*1.5}px,${-i*1.5}px) rotate(${(i-3)*1.5}deg);box-shadow:0 6px 16px rgba(91,141,208,0.3);`;
+    deck.appendChild(dc);
+  }
+  const hint=document.createElement('div');
+  hint.className='deck-hint';
+  hint.textContent='举手 或 点击牌堆';
+  deck.appendChild(hint);
+  table.appendChild(deck);
+
+  // 洗牌抖动
+  for(let k=0;k<3;k++){
+    deck.style.transition='transform .25s';
+    deck.style.transform=`rotate(${Math.random()*6-3}deg)`;
+    await sleep(260);
+  }
+  deck.style.transform='rotate(0)';
+  await sleep(200);
+
+  // 准备就绪
+  state.drawnCards = shuffleDeck().slice(0, SPREADS[state.spread].count);
+  state.drawIndex=0;
+  state.phase='ready';
+  $('actionBtn').disabled=false;
+  $('actionBtn').textContent='直接抽牌';
+  $('resetBtn').style.display='inline-block';
+  deck.addEventListener('click', onDeckClick);
+  const cam = state.camActive ? '把手掌举到镜头前' : '点击牌堆';
+  setStatus(`牌已就绪 ✦ <span class="hl">${cam}</span> 开始抽牌`);
+}
+
+function onDeckClick(){
+  if(state.phase==='ready') triggerDraw();
+}
+
+async function triggerDraw(){
+  if(state.phase!=='ready') return;
+  state.phase='drawing';
+  $('actionBtn').disabled=true;
+  $('detectRing').classList.remove('active','locked');
+  const sp=SPREADS[state.spread];
+  setStatus('牌正在被选中…');
+
+  // 牌堆飞散光点
+  const deck=$('deck');
+  const dr=deck.getBoundingClientRect();
+  emitSparks(dr.left+dr.width/2, dr.top+dr.height/2, 18);
+  await sleep(300);
+
+  // 布局牌位
+  const table=$('table');
+  table.className='table'+(sp.layout==='celtic'?' celtic':'');
+  table.innerHTML='';
+  const slots=[];
+  sp.positions.forEach((pos,i)=>{
+    const slot=document.createElement('div');
+    slot.className='slot'+(pos.cls?' '+pos.cls:'');
+    const card=document.createElement('div');
+    card.className='card';
+    const cardData=state.drawnCards[i];
+    if(cardData.reversed) card.classList.add('reversed');
+    card.innerHTML=`
+      <div class="inner">
+        <div class="face back"><div class="mandala"></div></div>
+        <div class="face front">
+          ${cardData.reversed?'<div class="f-rev">逆</div>':''}
+          <div class="f-top">${pos.label}</div>
+          <div class="f-icon">${cardData.icon}</div>
+          <div class="f-name">${cardData.name}</div>
+          <div class="f-en">${cardData.en}</div>
+        </div>
+      </div>`;
+    const lbl=document.createElement('div');
+    lbl.className='pos-label';
+    lbl.textContent=pos.label;
+    if(sp.layout!=='celtic'){ slot.appendChild(card); slot.appendChild(lbl); }
+    else { slot.appendChild(card); }
+    table.appendChild(slot);
+    slots.push(card);
+  });
+
+  // 依次翻牌
+  await sleep(200);
+  for(let i=0;i<slots.length;i++){
+    const r=slots[i].getBoundingClientRect();
+    emitSparks(r.left+r.width/2, r.top+r.height/2, 6);
+    slots[i].classList.add('flipped');
+    await sleep(sp.count>5?260:420);
+  }
+
+  await sleep(700);
+  state.phase='drawn';
+  setStep(3);
+  setStatus('解读已生成 ✦');
+  showReading();
+}
+
+function emitSparks(x,y,n){
+  for(let i=0;i<n;i++){
+    const s=document.createElement('div');
+    s.className='spark';
+    s.style.left=x+'px'; s.style.top=y+'px';
+    document.body.appendChild(s);
+    const ang=Math.random()*Math.PI*2, dist=40+Math.random()*90;
+    const tx=Math.cos(ang)*dist, ty=Math.sin(ang)*dist-30;
+    s.animate([
+      {transform:'translate(0,0) scale(1)',opacity:1},
+      {transform:`translate(${tx}px,${ty}px) scale(0)`,opacity:0}
+    ],{duration:700+Math.random()*400,easing:'cubic-bezier(.2,.6,.3,1)'}).onfinish=()=>s.remove();
+  }
+}
+
+/* ===================== 解读展示 ===================== */
+function showReading(){
+  const sp=SPREADS[state.spread];
+  const q=$('questionInput').value;
+  $('rTitle').textContent=sp.name;
+  $('rSub').textContent=sp.meta;
+  $('rQ').textContent = q.trim()? '问：'+q.trim() : '';
+
+  // 故事
+  $('story').innerHTML = buildStory(state.spread, state.drawnCards, q);
+
+  // 逐牌详情
+  const cd=$('cardsDetail');
+  cd.innerHTML='';
+  sp.positions.forEach((pos,i)=>{
+    const c=state.drawnCards[i];
+    const item=document.createElement('div');
+    item.className='cd-item';
+    item.innerHTML=`
+      <div class="cd-mini${c.reversed?' rev':''}">
+        <div class="m-icon">${c.icon}</div>
+        <div class="m-name">${c.name}</div>
+      </div>
+      <div class="cd-body">
+        <div class="cd-pos">${pos.label}</div>
+        <div class="cd-name">${c.name}
+          <span class="orient ${c.reversed?'rev':'up'}">${c.reversed?'逆位':'正位'}</span>
+        </div>
+        <div class="cd-keys">${(c.keywords||[]).map(k=>`<span class="k">${k}</span>`).join('')}</div>
+        <div class="cd-text">${meaning(c)}</div>
+      </div>`;
+    cd.appendChild(item);
+  });
+
+  $('reading').classList.add('show');
+  $('reading').scrollTop=0;
+}
+
+function closeReading(){ $('reading').classList.remove('show'); }
+function againDraw(){
+  closeReading();
+  state.phase='idle';
+  startShuffle();
+}
+
+/* ===================== 启动 ===================== */
+async function startApp(){
+  $('intro').classList.add('hide');
+  await sleep(450);
+  $('stage').style.display='flex';
+  renderSpreadTabs();
+  resetTable();
+  // 生成星尘
+  spawnDust();
+  // 尝试开摄像头
+  startCamera();
+}
+
+function spawnDust(){
+  const sky=$('sky');
+  for(let i=0;i<26;i++){
+    const d=document.createElement('div');
+    d.className='dust';
+    const sz=1.5+Math.random()*2.5;
+    d.style.width=sz+'px'; d.style.height=sz+'px';
+    d.style.left=Math.random()*100+'%';
+    d.style.top=Math.random()*100+'%';
+    d.style.animationDelay=Math.random()*4+'s';
+    sky.appendChild(d);
+  }
+}
+
+/* ===================== 事件绑定 ===================== */
+$('startBtn').addEventListener('click', startApp);
+$('actionBtn').addEventListener('click', ()=>{
+  if(state.phase==='idle') startShuffle();
+  else if(state.phase==='ready') triggerDraw();
+  else if(state.phase==='drawn') againDraw();
+});
+$('toggleCamBtn').addEventListener('click', toggleCamera);
+$('resetBtn').addEventListener('click', ()=>{ resetTable(); });
+$('ceRetry').addEventListener('click', startCamera);
+$('ceSkip').addEventListener('click', ()=>{ $('camError').classList.remove('show'); });
+$('rAgain').addEventListener('click', againDraw);
+$('rClose').addEventListener('click', closeReading);
+</script>
+</body>
+</html>
