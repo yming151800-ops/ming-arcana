@@ -344,10 +344,12 @@ body{
 
 /* 整体指引 */
 .r-summary .guide{
-  background:var(--glass-strong);border-radius:22px;padding:18px 22px;margin:10px 0 20px;
+  background:var(--glass-strong);border-radius:22px;padding:22px 24px;margin:10px 0 20px;
   border:1.5px solid rgba(255,255,255,0.9);box-shadow:0 8px 24px rgba(91,141,208,0.1);
-  font-size:14px;line-height:1.9;color:var(--blue-ink);text-align:center;letter-spacing:.5px;
+  font-size:15px;line-height:2.1;color:var(--blue-ink);letter-spacing:.5px;
+  position:relative;
 }
+.r-summary .guide::before{content:"✦";position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:18px;color:var(--gold);}
 
 /* 逐牌卡片（新，更清晰） */
 .r-cards{display:flex;flex-direction:column;gap:12px;margin:10px 0;}
@@ -1244,6 +1246,43 @@ function emitSparks(x,y,n){
 }
 
 /* ===================== 解读展示 ===================== */
+// 神谕式整体解读
+function divineSummary(spreadKey, cards, question){
+  const tone = suitTone(cards);
+  const fate = arcanaWeight(cards);
+  const q = question && question.trim();
+  let lines = [];
+
+  // 开篇
+  if(spreadKey==='single'){
+    lines.push('这一张牌为你展开了一个清晰的面向。把目光放回自身，答案不在牌里，在你看到牌时心中升起的那个回响。');
+  } else if(spreadKey==='three'){
+    lines.push('三张牌连成一条隐形的轨迹——来路、此刻、去向。你看不见时间的形状，但牌把它摊在了你面前。');
+  } else if(spreadKey==='relation'){
+    lines.push('五张牌照见一段关系的五个维度。有一面是你熟悉的，也有一面你可能从未正视过。');
+  } else if(spreadKey==='choice'){
+    lines.push('两条路在你面前摊开。牌的职责不是替你选，而是把每条路的气味、温度和可能的远方，如实呈现给你。');
+  } else if(spreadKey==='celtic'){
+    lines.push('十张牌展开一幅完整的图景——十字的中心是你的当下，杖柱指向你可能抵达的远方。这里面没有偶然。');
+  }
+
+  // 问题回应
+  if(q) lines.unshift(`你问的是「${esc(q)}」。`);
+
+  // 花色
+  if(tone) lines.push(`这一次，「${tone.word}」的能量贯穿了整副牌——它指向你当前真正在经历的核心议题。`);
+
+  // 大小牌
+  const majors = cards.filter(c=>c.arcana==='major').length;
+  if(majors >= cards.length/2){
+    lines.push('大阿尔卡那频频出现，这不是一桩可以被轻看的事。它在告诉你：你正站在一个有分量的节点上，认真对待它。');
+  } else if(majors === 0){
+    lines.push('全是小阿尔卡那——局面中没有不可抗力，你手里的每一次选择都在积成最后的走向。');
+  }
+
+  return lines.join('<br>');
+}
+
 function showReading(){
   const sp=SPREADS[state.spread];
   const q=$('questionInput').value;
@@ -1251,15 +1290,9 @@ function showReading(){
   $('rSub').textContent=sp.meta;
   $('rQ').textContent = q.trim()? '问：'+q.trim() : '';
 
-  // 整体指引
-  const tone = suitTone(state.drawnCards);
-  const fate = arcanaWeight(state.drawnCards);
-  let guide = '';
-  if(q.trim()) guide += `关于「${esc(q.trim())}」——`;
-  if(tone) guide += `这一副牌中「${tone.word}」的能量最为突出，它指向你当前真正在经历的核心。`;
-  if(fate>0.5) guide += ' 大阿尔卡那的出现频率不低，这不是一件可以轻看的事，它在提醒你认真对待眼前这个阶段。';
-  else if(fate===0) guide += ' 全数都是小阿尔卡那——局面的大部分主动权在你手里，一步一步来就好。';
-  $('rSummary').innerHTML = guide ? `<div class="guide">${guide}</div>` : '';
+  // 整体神谕
+  const oracle = divineSummary(state.spread, state.drawnCards, q);
+  $('rSummary').innerHTML = `<div class="guide">${oracle}</div>`;
 
   // 逐牌卡片
   const rc=$('rCards');
