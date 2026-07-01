@@ -213,45 +213,30 @@ body{
 .deck:hover .deck-top{transform:translateY(-8px);}
 .deck-hint{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;color:var(--blue-soft);letter-spacing:1px;}
 
-/* 扇形摊牌 */
-.fan-zone{width:100%;max-width:540px;min-height:190px;display:flex;align-items:flex-end;justify-content:center;gap:0;margin:0 auto 10px;position:relative;}
-.fan-card{
-  width:82px;height:132px;border-radius:10px;cursor:pointer;position:relative;
-  transition:transform .25s,box-shadow .25s;flex-shrink:0;
-  background:linear-gradient(145deg,#b8d4f5,#8bb3e0);
-  border:2px solid rgba(255,255,255,0.9);box-shadow:0 4px 14px rgba(91,141,208,0.25);
+/* 牌堆震颤动画 */
+.deck.shaking{
+  animation:deckShake .12s ease-in-out infinite;
+  cursor:default;
 }
-.fan-card .fc-mandala{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  font-size:20px;color:rgba(255,255,255,0.7);letter-spacing:2px;
+@keyframes deckShake{
+  0%,100%{transform:rotate(0deg) translateX(0);}
+  20%{transform:rotate(-1.8deg) translateX(-4px);}
+  40%{transform:rotate(1.6deg) translateX(4px);}
+  60%{transform:rotate(-1.2deg) translateX(-3px);}
+  80%{transform:rotate(1.2deg) translateX(3px);}
 }
-.fan-card .fc-num{
-  position:absolute;top:6px;left:8px;font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:1px;
+/* 飞牌动画 */
+.fly-card{
+  pointer-events:none;position:fixed;
+  z-index:150;
+  transition:all .5s cubic-bezier(.34,1.56,.64,1);
 }
-.fan-card.hover{
-  transform:translateY(-18px) scale(1.06);
-  box-shadow:0 16px 36px rgba(59,111,176,0.4),0 0 20px rgba(201,168,106,0.4);
-  border-color:var(--gold);
+.fly-card .inner{
+  width:100%;height:100%;position:relative;
+  transform-style:preserve-3d;
+  transition:transform .4s cubic-bezier(.4,.0,.2,1);
 }
-.fan-card.selected{
-  transform:translateY(-40px) scale(1.1) rotate(0);z-index:10;
-  box-shadow:0 20px 44px rgba(59,111,176,0.5);
-  border-color:var(--gold);transition:all .5s cubic-bezier(.34,1.56,.64,1);
-}
-/* 指尖光标 */
-.cam-cursor{
-  position:absolute;width:20px;height:20px;border-radius:50%;pointer-events:none;z-index:20;
-  background:rgba(201,168,106,0.25);border:2.5px solid var(--gold);
-  box-shadow:0 0 18px rgba(201,168,106,0.6);
-  transform:translate(-50%,-50%);opacity:0;transition:opacity .3s;
-}
-.cam-cursor.show{opacity:1;}
-.cam-cursor.pulse{animation:cursorPulse .8s ease-in-out;}
-
-@keyframes cursorPulse{
-  0%{transform:translate(-50%,-50%) scale(1);opacity:1}
-  100%{transform:translate(-50%,-50%) scale(2);opacity:0}
-}
+.fly-card.flipping .inner{transform:rotateY(180deg);}
 
 /* 单张牌（通用） */
 .card{
@@ -428,7 +413,7 @@ body{
   <div class="moon"></div>
   <div class="name">Ming Arcana</div>
   <div class="slogan">MING ARCANA</div>
-  <div class="desc">在云端，与你的内心对话<br>选一个牌阵，用手指指向你选的牌</div>
+  <div class="desc">在云端，与你的内心对话<br>选一个牌阵，点击牌堆逐张抽牌</div>
   <button class="intro-btn" id="startBtn">开 启</button>
   <div class="privacy">摄像头仅在本地识别「指尖」位置<br>画面不存储、不上传，关闭即销毁</div>
 </div>
@@ -463,8 +448,7 @@ body{
       <div class="overlay"></div>
       <div class="corner tl"></div><div class="corner tr"></div>
       <div class="corner bl"></div><div class="corner br"></div>
-      <div class="cam-cursor" id="camCursor"></div>
-      <div class="hand-hint" id="handHint">用手指指向卡牌 选中抽牌</div>
+      <div class="hand-hint" id="handHint">举手触发抽牌</div>
       <div class="detect-ring" id="detectRing"></div>
     </div>
     <div class="cam-error" id="camError">
@@ -478,8 +462,6 @@ body{
     </div>
   </div>
 
-  <!-- 扇形摊牌 -->
-  <div class="fan-zone" id="fanZone"></div>
   <!-- 牌桌 -->
   <div class="table" id="table"></div>
 
@@ -945,13 +927,12 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;'
 /* ===================== 状态 ===================== */
 const state = {
   spread: 'three',
-  phase: 'idle',     // idle | shuffling | ready | drawing | drawn
+  phase: 'idle',     // idle | shuffling | ready | sucking | drawing | drawn
   stream: null,
-  detectorRunning: false,
+  camActive: false,
   drawnCards: [],
   drawIndex: 0,
-  holdFrames: 0,
-  camActive: false
+  _fullDeck: []
 };
 const $ = id => document.getElementById(id);
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
@@ -1017,7 +998,6 @@ async function startCamera(){
     $('toggleCamBtn').style.display='inline-block';
     $('toggleCamBtn').textContent='关闭摄像头';
     $('handHint').classList.add('show');
-    startFingerTracking();
   }catch(err){
     state.camActive=false;
     showCamError(err);
@@ -1058,7 +1038,7 @@ function showCamErrorManual(title,msg){
 function toggleCamera(){
   if(state.camActive){
     if(state.stream) state.stream.getTracks().forEach(t=>t.stop());
-    state.stream=null; state.camActive=false; state.detectorRunning=false;
+    state.stream=null; state.camActive=false;
     $('video').srcObject=null;
     $('toggleCamBtn').textContent='开启摄像头';
     $('handHint').classList.remove('show');
@@ -1066,158 +1046,6 @@ function toggleCamera(){
   }else{
     startCamera();
   }
-}
-
-// 指尖追踪：找到画面上方皮肤区域的中心点 -> 近似指尖位置
-function findFingertip(canvas, ctx){
-  const w=canvas.width, h=canvas.height;
-  const data=ctx.getImageData(0,0,w,Math.floor(h*0.6)).data; // 只扫上半区
-  let sx=0,sy=0,count=0,topY=h;
-  for(let y=0;y<Math.floor(h*0.6);y++){
-    for(let x=0;x<w;x++){
-      const i=(y*w+x)*4;
-      const r=data[i],g=data[i+1],b=data[i+2];
-      if(r>95&&g>40&&b>20&&r>g&&r>b&&Math.max(r,g,b)-Math.min(r,g,b)>15&&Math.abs(r-g)>15){
-        sx+=x; sy+=y; count++;
-        if(y<topY) topY=y;
-      }
-    }
-  }
-  if(count<20) return null; // 皮肤点太少，认为没有手
-  const cx=Math.round(sx/count), cy=Math.round(sy/count);
-  // 用最上方的皮肤点作为指尖（更灵敏）
-  return { x:cx, y:Math.max(0,topY-2), raw:count };
-}
-
-// 指尖追踪主循环
-function startFingerTracking(){
-  if(state.detectorRunning) return;
-  state.detectorRunning=true;
-  const v=$('video'), cv=$('canvas');
-  cv.width=120; cv.height=90;
-  const ctx=cv.getContext('2d',{willReadFrequently:true});
-  const cursor=$('camCursor');
-  const hint=$('handHint');
-
-  const loop=()=>{
-    if(!state.detectorRunning||!state.camActive){ cursor.classList.remove('show'); return; }
-    try{
-      ctx.drawImage(v,0,0,cv.width,cv.height);
-      const tip=findFingertip(cv,ctx);
-      const vf=$('videoFrame'); // camera-wrap
-      const vr=vf.getBoundingClientRect();
-      const cardSlots=document.querySelectorAll('.fan-card:not(.selected)');
-
-      if(tip && cardSlots.length>0 && state.phase==='ready'){
-        // 镜像翻转 x
-        const mx=cv.width-tip.x;
-        // 映射到视频框坐标（视频宽高比与 canvas 一致）
-        const sx=vr.left+(mx/cv.width)*vr.width;
-        const sy=vr.top+(tip.y/cv.height)*vr.height;
-        cursor.style.left=sx+'px'; cursor.style.top=sy+'px';
-        cursor.classList.add('show');
-
-        // 检查是否落在某张卡上
-        let hit=null;
-        cardSlots.forEach(card=>{
-          const cr=card.getBoundingClientRect();
-          if(sx>=cr.left&&sx<=cr.right&&sy>=cr.top&&sy<=cr.bottom) hit=card;
-        });
-        // 清空 hover
-        cardSlots.forEach(c=>c.classList.remove('hover'));
-        if(hit){
-          hit.classList.add('hover');
-          state.hoverTarget=hit;
-          state.hoverFrames=(state.hoverFrames||0)+1;
-          if(state.hoverFrames>=10){ // ~0.6s 锁定
-            state.hoverFrames=0;
-            cursor.classList.add('pulse');
-            setTimeout(()=>cursor.classList.remove('pulse'),800);
-            selectFanCard(hit);
-          }
-        }else{
-          state.hoverTarget=null;
-          state.hoverFrames=0;
-        }
-        hint.classList.add('show');
-      }else{
-        cursor.classList.remove('show');
-        cardSlots&&cardSlots.forEach(c=>c.classList.remove('hover'));
-        state.hoverFrames=0;
-        state.hoverTarget=null;
-        if(state.phase==='ready'&&tip&&cardSlots.length===0) hint.classList.add('show');
-        else if(state.phase!=='ready') hint.classList.remove('show');
-      }
-    }catch(e){}
-    requestAnimationFrame(loop);
-  };
-  requestAnimationFrame(loop);
-}
-
-function selectFanCard(cardEl){
-  if(state.phase!=='ready') return;
-  cardEl.classList.add('selected');
-  // 找到这是第几张牌
-  const all=[...document.querySelectorAll('.fan-card')];
-  const idx=all.indexOf(cardEl);
-  if(idx<0) return;
-  state.drawIndex=state.drawIndex||0; // 当前抽到第几张
-  const drawnIdx=state.drawIndex; 
-  state.drawIndex++;
-  // 把选中牌对应的数据放到 drawnCards 的对应位置
-  // fanCards 存储了当前扇面每张牌的数据索引
-  const cardData=state.fanCards[idx];
-  state.drawnCards[state.drawnCount]=cardData;
-  state.drawnCount=(state.drawnCount||0)+1;
-
-  const sp=SPREADS[state.spread];
-  if(state.drawnCount>=sp.count){
-    // 抽完了
-    triggerDraw();
-  }else{
-    // 还需继续抽
-    // 移除选中的卡（保留1张留作视觉），风扇面更新
-    setTimeout(()=>{
-      cardEl.style.display='none';
-      // 重新扇出剩余牌（从drawnCards剩余索引往后取）
-      refanCards();
-    },500);
-  }
-}
-
-function refanCards(){
-  const sp=SPREADS[state.spread];
-  const n=sp.count;
-  const drawn=(state.drawnCount||0);
-  const remain=n-drawn;
-  if(remain<=0) return;
-  // fanCards = 全量牌的前 n 张的完整顺序，每次从已抽位置后取未抽的
-  const allCards=state._fullDeck.slice(0,n);
-  const remaining=allCards.slice(drawn);
-  // 最多展7张
-  const show=remaining.slice(0,Math.min(7,remaining.length));
-  state.fanCards=show;
-  renderFan(show);
-  setStatus(`还剩 ${remain} 张，<span class="hl">用手指指向要抽的牌</span>`);
-}
-
-function renderFan(cards){
-  const zone=$('fanZone');
-  zone.innerHTML='';
-  cards.forEach((cd,i)=>{
-    const el=document.createElement('div');
-    el.className='fan-card';
-    // 轻微旋转制造扇形效果
-    const total=cards.length;
-    const angle=(i-(total-1)/2)*7;
-    el.style.transform=`rotate(${angle}deg)`;
-    el.innerHTML=`
-      <div class="fc-num">${i+1}</div>
-      <div class="fc-mandala">✦</div>
-    `;
-    el.addEventListener('click',()=>{ selectFanCard(el); });
-    zone.appendChild(el);
-  });
 }
 
 /* ===================== 洗牌 / 抽牌 ===================== */
@@ -1229,19 +1057,17 @@ function shuffleDeck(){
 
 async function startShuffle(){
   state.phase='shuffling';
-  state.drawnCount=0;
+  state.drawIndex=0;
   state.drawnCards=[];
-  state.fanCards=[];
-  state.hoverFrames=0;
-  state.hoverTarget=null;
   $('actionBtn').disabled=true;
   $('resetBtn').style.display='none';
-  $('fanZone').innerHTML='';
   setStep(2);
   setStatus('洗牌中…让牌接住你此刻的心绪');
   const table=$('table');
   table.className='table';
   table.innerHTML='';
+
+  // 创建牌堆
   const deck=document.createElement('div');
   deck.className='deck';
   deck.id='deck';
@@ -1251,91 +1077,211 @@ async function startShuffle(){
     dc.style.cssText=`background:linear-gradient(135deg,#5b8dd0,#3b6fb0);border:2px solid rgba(255,255,255,0.85);transform:translate(${i*1.5}px,${-i*1.5}px) rotate(${(i-3)*1.5}deg);box-shadow:0 6px 16px rgba(91,141,208,0.3);`;
     deck.appendChild(dc);
   }
+  const hint=document.createElement('div');
+  hint.className='deck-hint';
+  hint.id='deckHint';
+  hint.textContent='点击牌堆抽牌';
+  deck.appendChild(hint);
   table.appendChild(deck);
-  for(let k=0;k<3;k++){
-    deck.style.transition='transform .25s';
-    deck.style.transform=`rotate(${Math.random()*6-3}deg)`;
-    await sleep(260);
-  }
-  deck.style.transform='rotate(0)';
-  await sleep(200);
-  deck.remove();
 
-  const sp=SPREADS[state.spread];
+  // 洗牌抖动
+  for(let k=0;k<4;k++){
+    deck.style.transition='transform .2s';
+    deck.style.transform=`rotate(${Math.random()*6-3}deg) translate(${(Math.random()-0.5)*6}px,${(Math.random()-0.5)*4}px)`;
+    await sleep(220);
+  }
+  deck.style.transform='rotate(0) translate(0,0)';
+  await sleep(200);
+
+  // 准备——洗好的 78 张完整牌序
   const full=shuffleDeck();
   state._fullDeck=full;
-  const topN=full.slice(0,sp.count);
-  const show=topN.slice(0,Math.min(7,topN.length));
-  state.fanCards=show;
-  renderFan(show);
+  state.drawnCards=full.slice(0,SPREADS[state.spread].count);
   state.phase='ready';
   $('actionBtn').disabled=false;
   $('actionBtn').textContent='直接抽牌（全抽）';
   $('resetBtn').style.display='inline-block';
-  const cam = state.camActive ? '用手指指向卡牌' : '';
-  setStatus(`牌已就绪 ✦ ${cam}<span class="hl"> 用手指指向想抽的牌</span>`);
+  setStatus(`点击牌堆抽牌  ✦ 还剩 <span class="hl">${SPREADS[state.spread].count}</span> 张`);
+
+  // 点击牌堆 → 逐张抽
+  deck.addEventListener('click', drawOneCard);
 }
 
-// 备用：一键全抽
-function quickDrawAll(){
+// 抽一张：震颤 → 飞出 → 翻牌
+async function drawOneCard(){
   if(state.phase!=='ready') return;
+  const deck=$('deck');
+  if(!deck) return;
+  const idx=state.drawIndex;
+  if(idx>=state.drawnCards.length){ return; }
+
+  // 震颤
+  state.phase='sucking';
+  deck.classList.add('shaking');
+  await sleep(700);
+  deck.classList.remove('shaking');
+
+  const cardData=state.drawnCards[idx];
+  const dr=deck.getBoundingClientRect();
+
+  // 预先在牌桌创建这个牌位
   const sp=SPREADS[state.spread];
-  const full=state._fullDeck||shuffleDeck();
-  state.drawnCards=full.slice(0,sp.count);
-  state.drawnCount=sp.count;
-  $('fanZone').innerHTML='';
+  const table=$('table');
+  if(idx===0){
+    // 第一次抽时才创建所有牌位
+    table.className='table'+(sp.layout==='celtic'?' celtic':'');
+    table.innerHTML='';
+    sp.positions.forEach((pos,i)=>{
+      const slot=document.createElement('div');
+      slot.className='slot'+(pos.cls?' '+pos.cls:'');
+      const card=document.createElement('div');
+      card.className='card';
+      const cd=state.drawnCards[i];
+      if(cd.reversed) card.classList.add('reversed');
+      card.innerHTML=`
+        <div class="inner">
+          <div class="face back"><div class="mandala"></div></div>
+          <div class="face front">
+            ${cd.reversed?'<div class="f-rev">逆</div>':''}
+            <div class="f-top">${pos.label}</div>
+            <div class="f-icon">${cd.icon}</div>
+            <div class="f-name">${cd.name}</div>
+            <div class="f-en">${cd.en}</div>
+          </div>
+        </div>`;
+      const lbl=document.createElement('div');
+      lbl.className='pos-label';
+      lbl.textContent=pos.label;
+      if(sp.layout!=='celtic'){ slot.appendChild(card); slot.appendChild(lbl); }
+      else { slot.appendChild(card); }
+      table.appendChild(slot);
+    });
+  }
+
+  // 翻第 idx 张牌
+  const allCards=table.querySelectorAll('.card');
+  const targetCard=allCards[idx];
+  if(!targetCard) return;
+
+  // 创建飞牌元素
+  const fly=document.createElement('div');
+  fly.className='card fly-card';
+  if(cardData.reversed) fly.classList.add('reversed');
+  fly.innerHTML=`
+    <div class="inner">
+      <div class="face back"><div class="mandala"></div></div>
+      <div class="face front">
+        ${cardData.reversed?'<div class="f-rev">逆</div>':''}
+        <div class="f-top">${sp.positions[idx].label}</div>
+        <div class="f-icon">${cardData.icon}</div>
+        <div class="f-name">${cardData.name}</div>
+        <div class="f-en">${cardData.en}</div>
+      </div>
+    </div>`;
+  document.body.appendChild(fly);
+
+  // 定位到牌堆位置
+  const tr=targetCard.getBoundingClientRect();
+  fly.style.left=dr.left+'px';
+  fly.style.top=dr.top+'px';
+  fly.style.width=dr.width+'px';
+  fly.style.height=dr.height+'px';
+  fly.offsetHeight; // force layout
+
+  // 飞向牌位并翻转
+  setTimeout(()=>{
+    fly.classList.add('flipping');
+    fly.style.left=tr.left+'px';
+    fly.style.top=tr.top+'px';
+    fly.style.width=tr.width+'px';
+    fly.style.height=tr.height+'px';
+  },50);
+
+  // 落地：替换为目标牌
+  setTimeout(()=>{
+    fly.remove();
+    targetCard.classList.add('flipped');
+    emitSparks(tr.left+tr.width/2, tr.top+tr.height/2, 8);
+  },550);
+
+  state.drawIndex=idx+1;
+  await sleep(350);
+
+  if(state.drawIndex>=sp.count){
+    // 抽完了
+    deck.remove();
+    await sleep(400);
+    state.phase='drawn';
+    setStep(3);
+    setStatus('解读已生成 ✦');
+    showReading();
+  }else{
+    state.phase='ready';
+    setStatus(`还剩 <span class="hl">${sp.count-state.drawIndex}</span> 张，点击牌堆继续抽牌`);
+  }
+}
+
+// 备用：一键全抽（跳过震颤逐张，直接翻完全部）
+function quickDrawAll(){
+  if(state.phase!=='ready'&&state.phase!=='sucking') return;
+  const deck=$('deck');
+  if(deck) deck.remove();
+  const sp=SPREADS[state.spread];
+  if(state.drawnCards.length===0){
+    state.drawnCards=(state._fullDeck||shuffleDeck()).slice(0,sp.count);
+  }
+  state.drawIndex=sp.count;
   triggerDraw();
 }
 
 async function triggerDraw(){
-  if(state.phase!=='ready') return;
-  $('fanZone').innerHTML='';
   state.phase='drawing';
   $('actionBtn').disabled=true;
   const sp=SPREADS[state.spread];
-  setStatus('翻牌中…');
-
   const table=$('table');
-  table.className='table'+(sp.layout==='celtic'?' celtic':'');
-  table.innerHTML='';
-  const slots=[];
-  sp.positions.forEach((pos,i)=>{
-    const slot=document.createElement('div');
-    slot.className='slot'+(pos.cls?' '+pos.cls:'');
-    const card=document.createElement('div');
-    card.className='card';
-    const cardData=state.drawnCards[i];
-    if(cardData.reversed) card.classList.add('reversed');
-    card.innerHTML=`
-      <div class="inner">
-        <div class="face back"><div class="mandala"></div></div>
-        <div class="face front">
-          ${cardData.reversed?'<div class="f-rev">逆</div>':''}
-          <div class="f-top">${pos.label}</div>
-          <div class="f-icon">${cardData.icon}</div>
-          <div class="f-name">${cardData.name}</div>
-          <div class="f-en">${cardData.en}</div>
-        </div>
-      </div>`;
-    const lbl=document.createElement('div');
-    lbl.className='pos-label';
-    lbl.textContent=pos.label;
-    if(sp.layout!=='celtic'){ slot.appendChild(card); slot.appendChild(lbl); }
-    else { slot.appendChild(card); }
-    table.appendChild(slot);
-    slots.push(card);
-  });
 
-  // 依次翻牌
-  await sleep(200);
+  // 如果牌桌还没建好（全抽时），建它
+  if(!table.querySelector('.card')){
+    table.className='table'+(sp.layout==='celtic'?' celtic':'');
+    table.innerHTML='';
+    sp.positions.forEach((pos,i)=>{
+      const slot=document.createElement('div');
+      slot.className='slot'+(pos.cls?' '+pos.cls:'');
+      const card=document.createElement('div');
+      card.className='card';
+      const cd=state.drawnCards[i];
+      if(cd.reversed) card.classList.add('reversed');
+      card.innerHTML=`
+        <div class="inner">
+          <div class="face back"><div class="mandala"></div></div>
+          <div class="face front">
+            ${cd.reversed?'<div class="f-rev">逆</div>':''}
+            <div class="f-top">${pos.label}</div>
+            <div class="f-icon">${cd.icon}</div>
+            <div class="f-name">${cd.name}</div>
+            <div class="f-en">${cd.en}</div>
+          </div>
+        </div>`;
+      const lbl=document.createElement('div');
+      lbl.className='pos-label';
+      lbl.textContent=pos.label;
+      if(sp.layout!=='celtic'){ slot.appendChild(card); slot.appendChild(lbl); }
+      else { slot.appendChild(card); }
+      table.appendChild(slot);
+    });
+  }
+
+  setStatus('翻牌中…');
+  // 翻尚未翻的牌
+  const slots=table.querySelectorAll('.card:not(.flipped)');
   for(let i=0;i<slots.length;i++){
     const r=slots[i].getBoundingClientRect();
     emitSparks(r.left+r.width/2, r.top+r.height/2, 6);
     slots[i].classList.add('flipped');
-    await sleep(sp.count>5?260:420);
+    await sleep(sp.count>5?200:350);
   }
 
-  await sleep(700);
+  await sleep(600);
   state.phase='drawn';
   setStep(3);
   setStatus('解读已生成 ✦');
@@ -1433,7 +1379,7 @@ function spawnDust(){
 $('startBtn').addEventListener('click', startApp);
 $('actionBtn').addEventListener('click', ()=>{
   if(state.phase==='idle') startShuffle();
-  else if(state.phase==='ready') quickDrawAll();
+  else if(state.phase==='ready'||state.phase==='sucking') quickDrawAll();
   else if(state.phase==='drawn') againDraw();
 });
 $('toggleCamBtn').addEventListener('click', toggleCamera);
