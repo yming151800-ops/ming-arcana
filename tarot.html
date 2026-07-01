@@ -1081,7 +1081,7 @@ function getPos(e){
   return {x: p.clientX, y: p.clientY};
 }
 function startFanDrag(e, idx){
-  if(state.phase!=='ready'||document.querySelector('.fan-card.gone')) return;
+  if(state.phase!=='ready') return;
   state.phase='sucking';
   const el=document.querySelector(`.fan-card[data-idx="${idx}"]`);
   if(!el||el.classList.contains('gone')) return;
