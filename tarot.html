@@ -801,9 +801,10 @@ function suitTone(deck){ // 主导花色 → 议题底色
   if(cnt.wands===max) return {suit:'wands', word:'行动与热情'};
   return {suit:'pentacles', word:'现实与积累'};
 }
-// 连接词库（避免机械）
-const CONNECT = ['于是','因此','也正因如此','顺着这股力量','而','接着','慢慢地','这时'];
-const SOFT = ['或许','也许','我感觉','似乎','你心里大概清楚','别急着否认'];
+// 连接词库（中性神谕）
+const CONNECT = ['于是','也因此','顺着这条脉络','继而','同时','随之'];
+const DIVINE = ['提示','揭示','表明','暗示'];
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 // 主入口：根据牌阵类型生成故事 HTML
@@ -826,12 +827,12 @@ function buildStory(spreadKey, cards, question){
   // 尾声：花色/命运感的整体提点
   let coda = '';
   if(tone){
-    coda += `这一摊牌里，<span class="accent">${tone.word}</span>的气息最浓——它提示你，眼下真正在牵动你的，是这一块。`;
+    coda += `这一摊牌中，<span class="accent">${tone.word}</span>的能量最为突出——它是当前阶段的主旋律。`;
   }
   if(fate>0.5){
-    coda += `而大阿尔卡那接连出现，说明这并非一桩小事，是命运在推着你走一段必经的路；你能做的不是抗拒，是看清它、然后顺势而为。`;
+    coda += `大阿尔卡那占比较高，说明正在展开的并非日常小事，而是一段有分量的必经之路。顺势而为，而非抗拒，是牌面给出的建议。`;
   } else if(fate===0){
-    coda += `牌面几乎都是小牌，这是个好消息：局面大体握在你自己手里，一步一步来，结果由你定。`;
+    coda += `牌面全部为小阿尔卡那，暗示局面的主动权在现实层面——每一步的累积将决定走向。`;
   }
   if(coda) html += `<p>${coda}</p>`;
   return html;
@@ -842,83 +843,83 @@ function orientWord(c){ return c.reversed ? '逆位' : '正位'; }
 // —— 单张
 function storySingle(c, q, tone){
   let p1 = q
-    ? `你问的是「${esc(q)}」。牌面给你的回答，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`
-    : `这一刻为你翻开的，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`;
+    ? `你问的是「${esc(q)}」。牌面给出的回答，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`
+    : `此刻显现的，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`;
   let p2 = `${meaning(c)}`;
   let p3 = c.reversed
-    ? `逆位不是坏事，它更像一面镜子，照出你此刻卡住的地方。${pick(SOFT)}，你需要的不是更用力，而是换个方向松一松。`
-    : `${pick(SOFT)}你心里其实已经有了方向，这张牌只是替你把它说出口——${shortKeys(c)}，就是接下来值得你信任的能量。`;
-  return `<h3>给你的回答</h3><p>${p1}</p><p>${p2}</p><p>${p3}</p>`;
+    ? `逆位不是判词，而是一个观察点：此处能量受阻或过度。关键不在于对抗，而在于看清它在提醒你什么。`
+    : `这张牌的能量是正向的、流动的。「${shortKeys(c)}」是它的核心信息——值得你纳入当前的考量。`;
+  return `<h3>回答</h3><p>${p1}</p><p>${p2}</p><p>${p3}</p>`;
 }
 
-// —— 三牌阵：过去→现在→未来 叙事弧
+// —— 三牌阵：过去→现在→未来
 function storyThree(cards, q, tone){
   const [past, now, fut] = cards;
-  let head = q ? `关于「${esc(q)}」，让我把这三张牌连成一段你的故事——` : `让我把这三张牌连成一段你的故事——`;
-  let p1 = `故事要从<span class="ghost-name">${past.name}（${orientWord(past)}）</span>说起。${meaning(past)}这是你的来路，是把你带到今天这一步的那股力量。`;
-  let p2 = `${pick(CONNECT)}，来到当下：<span class="ghost-name">${now.name}（${orientWord(now)}）</span>。${meaning(now)}${past.arcana==='major'&&now.arcana==='major' ? '过去与现在都落在大牌上，说明这是一段你绕不开的人生功课，不是一时心血来潮。' : '这就是你此刻真正站着的位置。'}`;
+  let head = q ? `关于「${esc(q)}」，三张牌连成一条时间线——` : `三张牌展开一段轨迹——`;
+  let p1 = `过去的位置是<span class="ghost-name">${past.name}（${orientWord(past)}）</span>。${meaning(past)}这是来路——构成此刻根基的那段历程。`;
+  let p2 = `${pick(CONNECT)}，现在的位置是<span class="ghost-name">${now.name}（${orientWord(now)}）</span>。${meaning(now)}${past.arcana==='major'&&now.arcana==='major' ? '过去与现在皆为大牌，说明这是一段有分量的历程，不是暂时的波动。' : '这就是当下的坐标。'}`;
   let bridge = relate(now, fut);
-  let p3 = `那往哪里去呢？<span class="ghost-name">${fut.name}（${orientWord(fut)}）</span>。${meaning(fut)}${bridge}`;
+  let p3 = `未来的方向指向<span class="ghost-name">${fut.name}（${orientWord(fut)}）</span>。${meaning(fut)}${bridge}`;
   let p4 = fut.reversed
-    ? `未来这张是逆位，别慌——它不是给你判决，是给你提醒：如果照现在的惯性走，容易卡在这里。换个心态，结局就会跟着改写。`
-    : `这是一个值得你往前走的方向。${pick(SOFT)}，你已经隐约感觉到了，对吗？`;
-  return `<h3>你的故事</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p>`;
+    ? `未来这张为逆位——它提供的不是判决，而是一个预警：若照当前惯性前行，此处可能会遇到阻力。意识到它，路径便可以调整。`
+    : `这一方向处于正向流动中。它所指向的轨迹值得留意。`;
+  return `<h3>时间之流</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p>`;
 }
 
-// 两张牌之间的关系过渡句
+// 两张牌之间的关系过渡
 function relate(a, b){
-  if(a.suit && b.suit && a.suit===b.suit) return '两张牌同属一个花色，能量是连贯的——你正走在同一条线上，没有跑偏。';
-  if(a.arcana==='major' && b.arcana==='minor') return '从大牌走到小牌，意味着宏大的转折正在落到具体的日常里——抽象的命运，开始变成你能动手的事。';
-  if(a.arcana==='minor' && b.arcana==='major') return '从小事走向大牌，说明眼前这件具体的事，会把你推向一个更大的转折，别小看它。';
-  if(a.reversed && !b.reversed) return '从逆到正，是一条由堵到通的路——你正在解开一个结。';
-  if(!a.reversed && b.reversed) return '由正转逆，提醒你前路有个需要留心的坎，提前看见就不至于被绊倒。';
-  return '这两股能量之间有张力，而张力恰恰是故事往前走的动力。';
+  if(a.suit && b.suit && a.suit===b.suit) return '两张牌同属一个元素，能量是连续的——前后的轨迹没有断裂。';
+  if(a.arcana==='major' && b.arcana==='minor') return '从大牌走向小牌，意味着一个宏观主题正在落到具体的现实中。';
+  if(a.arcana==='minor' && b.arcana==='major') return '从小牌走向大牌，说明一件日常之事可能导向一个更重要的节点。';
+  if(a.reversed && !b.reversed) return '由逆转正，能量正在由阻塞走向通畅。';
+  if(!a.reversed && b.reversed) return '由正转逆，前方存在一个需要注意的关卡。';
+  return '这两张之间存在张力——而张力本身是变化的先兆。';
 }
 
 // —— 关系之镜（5张）
 function storyRelation(cards, q, tone){
   const [you, them, bond, obs, out] = cards;
-  let head = q ? `关于「${esc(q)}」这段关系，牌为你照出了五个面——` : `这面镜子，照出了你们关系的五个面——`;
-  let p1 = `先看你自己：<span class="ghost-name">${you.name}（${orientWord(you)}）</span>。${meaning(you)}这是你带进这段关系里的状态。`;
-  let p2 = `再看对方：<span class="ghost-name">${them.name}（${orientWord(them)}）</span>。${meaning(them)}${relate(you,them)}`;
-  let p3 = `而你们之间真正流动的，是<span class="ghost-name">${bond.name}（${orientWord(bond)}）</span>。${meaning(bond)}`;
-  let p4 = `当然，关系里总有功课。横在你们面前的是<span class="ghost-name">${obs.name}（${orientWord(obs)}）</span>。${meaning(obs)}${pick(SOFT)}，这一点你们彼此都心知肚明，只是谁先开口的问题。`;
-  let p5 = `若顺着现在的节奏走下去，关系会走向<span class="ghost-name">${out.name}（${orientWord(out)}）</span>。${meaning(out)}${out.reversed?'逆位的结果不是终点，是叉路口——你们还有机会换条路走。':'这是个温柔的结果，值得你为之用心经营。'}`;
+  let head = q ? `关于「${esc(q)}」这段关系，牌面呈现出五个切面——` : `这面镜子映射出关系的五个切面——`;
+  let p1 = `你的位置：<span class="ghost-name">${you.name}（${orientWord(you)}）</span>。${meaning(you)}`;
+  let p2 = `对方的位置：<span class="ghost-name">${them.name}（${orientWord(them)}）</span>。${meaning(them)}${relate(you,them)}`;
+  let p3 = `<span class="ghost-name">${bond.name}（${orientWord(bond)}）</span>，代表着这段关系的联结本身。${meaning(bond)}`;
+  let p4 = `横亘的课题是<span class="ghost-name">${obs.name}（${orientWord(obs)}）</span>。${meaning(obs)}`;
+  let p5 = `在当前轨迹上，这段关系走向<span class="ghost-name">${out.name}（${orientWord(out)}）</span>。${meaning(out)}${out.reversed?'逆位在这里意味着这条路径存在变数——结局尚未锁死。':'顺位指向一个稳定的方向——但牌阵不预言，它只揭示当前势能的延伸。'}`;
   return `<h3>关系之镜</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p><p>${p5}</p>`;
 }
 
-// —— 凯尔特十字（10张，分段讲故事）
+// —— 凯尔特十字（10张，分三幕）
 function storyCeltic(cards, q, tone, fate){
-  const m = {}; // 按位置key索引
+  const m = {};
   SPREADS.celtic.positions.forEach((pos,i)=>{ m[pos.key]=cards[i]; });
-  let head = q ? `关于「${esc(q)}」，凯尔特十字摊开了完整的全貌。我不逐张念，而是把它读成一个故事——` : `凯尔特十字摊开了完整的全貌。我把它读成一个故事——`;
+  let head = q ? `关于「${esc(q)}」，凯尔特十字展开完整的结构。分三幕来读——` : `凯尔特十字展开完整的结构。分三幕来读——`;
 
-  // 第一幕：核心张力（现况 vs 挑战）
-  let act1 = `<h3>第一幕 · 此刻的核心</h3>`;
-  act1 += `<p>整件事的圆心，是<span class="ghost-name">${m.core.name}（${orientWord(m.core)}）</span>——${meaning(m.core)}而横在它正上方、让事情变复杂的那股力量，是<span class="ghost-name">${m.cross.name}（${orientWord(m.cross)}）</span>。${meaning(m.cross)}</p>`;
-  act1 += `<p>这两张牌的拉扯，就是你整个问题的主题：一边是你的现况，一边是你必须面对的课题。${pick(SOFT)}，先把这组张力看明白，后面的牌才有依托。</p>`;
+  // 第一幕：核心张力
+  let act1 = `<h3>第一幕 · 核心张力</h3>`;
+  act1 += `<p>全局的圆心是<span class="ghost-name">${m.core.name}（${orientWord(m.core)}）</span>——${meaning(m.core)}横亘其上的挑战是<span class="ghost-name">${m.cross.name}（${orientWord(m.cross)}）</span>。${meaning(m.cross)}</p>`;
+  act1 += `<p>这两张的对照构成了整个问题的核心张力：一边是当下，一边是需要面对的力量。理解了这组关系，后面的信息便有了参照。</p>`;
 
-  // 第二幕：时间线（根基→过去→现况→近未来）
-  let act2 = `<h3>第二幕 · 来龙与去脉</h3>`;
-  act2 += `<p>往下挖，事情的根基藏着<span class="ghost-name">${m.found.name}（${orientWord(m.found)}）</span>——${meaning(m.found)}这是水面之下的远因，常常连你自己都没太察觉。</p>`;
-  act2 += `<p>${pick(CONNECT)}，刚刚过去、正在淡出的是<span class="ghost-name">${m.past.name}（${orientWord(m.past)}）</span>。${meaning(m.past)}它是上一个章节，已经在退场，但余温还在。</p>`;
-  act2 += `<p>而你抬头看见、有意识在追求的目标，是<span class="ghost-name">${m.crown.name}（${orientWord(m.crown)}）</span>。${meaning(m.crown)}${tensionCheck(m.found,m.crown)}</p>`;
-  act2 += `<p>接下来几周即将浮现的，是<span class="ghost-name">${m.near.name}（${orientWord(m.near)}）</span>。${meaning(m.near)}这是故事的下一页，不是结局。</p>`;
+  // 第二幕：时间线
+  let act2 = `<h3>第二幕 · 时间线索</h3>`;
+  act2 += `<p>根基深处是<span class="ghost-name">${m.found.name}（${orientWord(m.found)}）</span>——${meaning(m.found)}这是潜层之下的远因，未必在意识层面。</p>`;
+  act2 += `<p>近期过去是<span class="ghost-name">${m.past.name}（${orientWord(m.past)}）</span>。${meaning(m.past)}它正在退场，但遗存仍在。</p>`;
+  act2 += `<p>意识朝向的目标是<span class="ghost-name">${m.crown.name}（${orientWord(m.crown)}）</span>。${meaning(m.crown)}${tensionCheck(m.found,m.crown)}</p>`;
+  act2 += `<p>未来数周将浮现的能量是<span class="ghost-name">${m.near.name}（${orientWord(m.near)}）</span>。${meaning(m.near)}这是下一段情节，并非终局。</p>`;
 
-  // 第三幕：内在到外在到结果（权杖柱）
-  let act3 = `<h3>第三幕 · 你如何走到结局</h3>`;
-  act3 += `<p>这段旅程里，你看待自己的方式是<span class="ghost-name">${m.self.name}（${orientWord(m.self)}）</span>。${meaning(m.self)}这是你的镜头——但镜头里的你，未必是全部的真相。</p>`;
-  act3 += `<p>你身处的环境、你掌控不了的外力，是<span class="ghost-name">${m.env.name}（${orientWord(m.env)}）</span>。${meaning(m.env)}</p>`;
-  act3 += `<p>最深的一张，是希望与恐惧——<span class="ghost-name">${m.hope.name}（${orientWord(m.hope)}）</span>。${meaning(m.hope)}你最渴望的和最害怕的，往往是同一件事；看懂这张，常常就是整个解读最亮的那束光。</p>`;
-  act3 += `<p>最后，如果一切顺着现在的能量走下去，路会通向<span class="ghost-name">${m.result.name}（${orientWord(m.result)}）</span>。${meaning(m.result)}${m.result.reversed?'但记住，逆位的结果从来不是判决书——你前面九张牌里的每一个选择，都在悄悄改写它。':'这是当前轨迹下最可能的落点。它不是命定，而是你此刻方向的自然延伸——想要它，就守住现在的节奏。'}</p>`;
+  // 第三幕：从内在到外在
+  let act3 = `<h3>第三幕 · 走向结局</h3>`;
+  act3 += `<p>自我态度由<span class="ghost-name">${m.self.name}（${orientWord(m.self)}）</span>代表。${meaning(m.self)}这是你观察自己的方式，但不一定是全部事实。</p>`;
+  act3 += `<p>外在环境由<span class="ghost-name">${m.env.name}（${orientWord(m.env)}）</span>代表。${meaning(m.env)}</p>`;
+  act3 += `<p>希望与恐惧藏于<span class="ghost-name">${m.hope.name}（${orientWord(m.hope)}）</span>。${meaning(m.hope)}希望与恐惧同一体——理解这张，常能照亮全局。</p>`;
+  act3 += `<p>最终，能量指向<span class="ghost-name">${m.result.name}（${orientWord(m.result)}）</span>。${meaning(m.result)}${m.result.reversed?'逆位的结果不是必然——它提示当前路径上的不确定因素，选择可以改变轨迹。':'顺位落在终点，是当前势能的合理延伸。它并非不可改写，但提示了值得关注的方向。'}</p>`;
 
   return head ? `<p>${head}</p>${act1}${act2}${act3}` : `${act1}${act2}${act3}`;
 }
-// 根基 vs 目标 的内外一致性检查
+// 根基 vs 目标
 function tensionCheck(found, crown){
-  if(found.suit && crown.suit && found.suit===crown.suit) return '根基和目标同属一种能量，说明你的内在和愿望是统一的——这是一种难得的笃定。';
-  if(found.reversed !== crown.reversed) return '有意思的是，潜意识的根基和意识的目标，一正一逆——你想要的，和你深处真正驱动你的，可能并不完全是一回事。这处错位，正是这次牌阵要你看见的。';
-  return '把这两张放在一起看：你头顶的愿望，和你脚下的根基，是否真的朝着同一个方向？';
+  if(found.suit && crown.suit && found.suit===crown.suit) return '根基与愿望同属一个元素，内外没有分裂——这种一致性本身就是一种力量。';
+  if(found.reversed !== crown.reversed) return '根基（潜意识）与目标（意识）一正一逆——表层追求与深层驱动之间存在错位。这处偏差正是牌阵想要揭示的。';
+  return '将根基与目标对照：你脚下的起点，和你仰望的方向，是否真的在一条线上？';
 }
 
 // 简单转义
@@ -1050,7 +1051,7 @@ function toggleCamera(){
 
 /* ===================== 洗牌 / 抽牌 ===================== */
 function shuffleDeck(){
-  const d=TAROT_DECK.map(c=>({...c, reversed: Math.random()<0.42}));
+  const d=TAROT_DECK.map(c=>({...c, reversed: Math.random()<0.5}));
   for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
   return d;
 }
