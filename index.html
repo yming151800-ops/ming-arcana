@@ -768,7 +768,7 @@ const SPREADS = {
 
 /* ===================== 解读引擎（故事性叙事） ===================== */
 // 工具：取牌的方向化关键词与短意
-function meaning(c){ return c.reversed ? c.reversed : c.upright; }
+function meaning(c){ return c.rev ? c.reversed : c.upright; }
 function shortKeys(c){ return (c.keywords||[]).slice(0,3).join('、'); }
 function arcanaWeight(deck){ // 大牌占比 → 命运感
   const majors = deck.filter(c=>c.arcana==='major').length;
@@ -822,7 +822,7 @@ function buildStory(spreadKey, cards, question){
   return html;
 }
 
-function orientWord(c){ return c.reversed ? '逆位' : '正位'; }
+function orientWord(c){ return c.rev ? '逆位' : '正位'; }
 
 // —— 单张
 function storySingle(c, q, tone){
@@ -830,7 +830,7 @@ function storySingle(c, q, tone){
     ? `你问的是「${esc(q)}」。牌面给出的回答，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`
     : `此刻显现的，是<span class="ghost-name">${c.name}（${orientWord(c)}）</span>。`;
   let p2 = `${meaning(c)}`;
-  let p3 = c.reversed
+  let p3 = c.rev
     ? `逆位不是判词，而是一个观察点：此处能量受阻或过度。关键不在于对抗，而在于看清它在提醒你什么。`
     : `这张牌的能量是正向的、流动的。「${shortKeys(c)}」是它的核心信息——值得你纳入当前的考量。`;
   return `<h3>回答</h3><p>${p1}</p><p>${p2}</p><p>${p3}</p>`;
@@ -844,7 +844,7 @@ function storyThree(cards, q, tone){
   let p2 = `${pick(CONNECT)}，现在的位置是<span class="ghost-name">${now.name}（${orientWord(now)}）</span>。${meaning(now)}${past.arcana==='major'&&now.arcana==='major' ? '过去与现在皆为大牌，说明这是一段有分量的历程，不是暂时的波动。' : '这就是当下的坐标。'}`;
   let bridge = relate(now, fut);
   let p3 = `未来的方向指向<span class="ghost-name">${fut.name}（${orientWord(fut)}）</span>。${meaning(fut)}${bridge}`;
-  let p4 = fut.reversed
+  let p4 = fut.rev
     ? `未来这张为逆位——它提供的不是判决，而是一个预警：若照当前惯性前行，此处可能会遇到阻力。意识到它，路径便可以调整。`
     : `这一方向处于正向流动中。它所指向的轨迹值得留意。`;
   return `<h3>时间之流</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p>`;
@@ -855,8 +855,8 @@ function relate(a, b){
   if(a.suit && b.suit && a.suit===b.suit) return '两张牌同属一个元素，能量是连续的——前后的轨迹没有断裂。';
   if(a.arcana==='major' && b.arcana==='minor') return '从大牌走向小牌，意味着一个宏观主题正在落到具体的现实中。';
   if(a.arcana==='minor' && b.arcana==='major') return '从小牌走向大牌，说明一件日常之事可能导向一个更重要的节点。';
-  if(a.reversed && !b.reversed) return '由逆转正，能量正在由阻塞走向通畅。';
-  if(!a.reversed && b.reversed) return '由正转逆，前方存在一个需要注意的关卡。';
+  if(a.rev && !b.rev) return '由逆转正，能量正在由阻塞走向通畅。';
+  if(!a.rev && b.rev) return '由正转逆，前方存在一个需要注意的关卡。';
   return '这两张之间存在张力——而张力本身是变化的先兆。';
 }
 
@@ -868,7 +868,7 @@ function storyRelation(cards, q, tone){
   let p2 = `对方的位置：<span class="ghost-name">${them.name}（${orientWord(them)}）</span>。${meaning(them)}${relate(you,them)}`;
   let p3 = `<span class="ghost-name">${bond.name}（${orientWord(bond)}）</span>，代表着这段关系的联结本身。${meaning(bond)}`;
   let p4 = `横亘的课题是<span class="ghost-name">${obs.name}（${orientWord(obs)}）</span>。${meaning(obs)}`;
-  let p5 = `在当前轨迹上，这段关系走向<span class="ghost-name">${out.name}（${orientWord(out)}）</span>。${meaning(out)}${out.reversed?'逆位在这里意味着这条路径存在变数——结局尚未锁死。':'顺位指向一个稳定的方向——但牌阵不预言，它只揭示当前势能的延伸。'}`;
+  let p5 = `在当前轨迹上，这段关系走向<span class="ghost-name">${out.name}（${orientWord(out)}）</span>。${meaning(out)}${out.rev?'逆位在这里意味着这条路径存在变数——结局尚未锁死。':'顺位指向一个稳定的方向——但牌阵不预言，它只揭示当前势能的延伸。'}`;
   return `<h3>关系之镜</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p><p>${p5}</p>`;
 }
 
@@ -914,14 +914,14 @@ function storyCeltic(cards, q, tone, fate){
   act3 += `<p>自我态度由<span class="ghost-name">${m.self.name}（${orientWord(m.self)}）</span>代表。${meaning(m.self)}这是你观察自己的方式，但不一定是全部事实。</p>`;
   act3 += `<p>外在环境由<span class="ghost-name">${m.env.name}（${orientWord(m.env)}）</span>代表。${meaning(m.env)}</p>`;
   act3 += `<p>希望与恐惧藏于<span class="ghost-name">${m.hope.name}（${orientWord(m.hope)}）</span>。${meaning(m.hope)}希望与恐惧同一体——理解这张，常能照亮全局。</p>`;
-  act3 += `<p>最终，能量指向<span class="ghost-name">${m.result.name}（${orientWord(m.result)}）</span>。${meaning(m.result)}${m.result.reversed?'逆位的结果不是必然——它提示当前路径上的不确定因素，选择可以改变轨迹。':'顺位落在终点，是当前势能的合理延伸。它并非不可改写，但提示了值得关注的方向。'}</p>`;
+  act3 += `<p>最终，能量指向<span class="ghost-name">${m.result.name}（${orientWord(m.result)}）</span>。${meaning(m.result)}${m.result.rev?'逆位的结果不是必然——它提示当前路径上的不确定因素，选择可以改变轨迹。':'顺位落在终点，是当前势能的合理延伸。它并非不可改写，但提示了值得关注的方向。'}</p>`;
 
   return head ? `<p>${head}</p>${act1}${act2}${act3}` : `${act1}${act2}${act3}`;
 }
 // 根基 vs 目标
 function tensionCheck(found, crown){
   if(found.suit && crown.suit && found.suit===crown.suit) return '根基与愿望同属一个元素，内外没有分裂——这种一致性本身就是一种力量。';
-  if(found.reversed !== crown.reversed) return '根基（潜意识）与目标（意识）一正一逆——表层追求与深层驱动之间存在错位。这处偏差正是牌阵想要揭示的。';
+  if(found.rev !== crown.rev) return '根基（潜意识）与目标（意识）一正一逆——表层追求与深层驱动之间存在错位。这处偏差正是牌阵想要揭示的。';
   return '将根基与目标对照：你脚下的起点，和你仰望的方向，是否真的在一条线上？';
 }
 
@@ -980,7 +980,7 @@ function setStatus(html){ $('status').innerHTML = html; }
 
 /* ===================== 抽牌逻辑（无摄像头，触屏抽） ===================== *//* ===================== 洗牌 / 抽牌 ===================== */
 function shuffleDeck(){
-  const d=TAROT_DECK.map(c=>({...c, reversed: Math.random()<0.5}));
+  const d=TAROT_DECK.map(c=>({...c, rev: Math.random()<0.5}));
   for(let i=d.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [d[i],d[j]]=[d[j],d[i]]; }
   return d;
 }
@@ -1162,12 +1162,12 @@ function snapAndFlip(idx, slotEl){
   const pos=sp.positions[idx];
   const fly=document.createElement('div');
   fly.className='card fly-card';
-  if(cd.reversed) fly.classList.add('reversed');
+  if(cd.rev) fly.classList.add('reversed');
   fly.innerHTML=`
     <div class="inner">
       <div class="face back"><div class="mandala"></div></div>
       <div class="face front">
-        ${cd.reversed?'<div class="f-rev">逆</div>':''}
+        ${cd.rev?'<div class="f-rev">逆</div>':''}
         <div class="f-top">${pos.label}</div>
         <div class="f-icon">${cd.icon}</div>
         <div class="f-name">${cd.name}</div>
@@ -1188,12 +1188,12 @@ function snapAndFlip(idx, slotEl){
     slotEl.classList.remove('empty','highlight');
     const real=document.createElement('div');
     real.className='card flipped';
-    if(cd.reversed) real.classList.add('reversed');
+    if(cd.rev) real.classList.add('reversed');
     real.innerHTML=`
       <div class="inner">
         <div class="face back"><div class="mandala"></div></div>
         <div class="face front">
-          ${cd.reversed?'<div class="f-rev">逆</div>':''}
+          ${cd.rev?'<div class="f-rev">逆</div>':''}
           <div class="f-top">${pos.label}</div>
           <div class="f-icon">${cd.icon}</div>
           <div class="f-name">${cd.name}</div>
@@ -1251,13 +1251,14 @@ function showReading(){
   $('rSub').textContent=sp.meta;
   $('rQ').textContent = q.trim()? '问：'+q.trim() : '';
 
-  // 整体指引（精简）
+  // 整体指引
   const tone = suitTone(state.drawnCards);
   const fate = arcanaWeight(state.drawnCards);
   let guide = '';
-  if(tone) guide += `本次牌面中「${tone.word}」的能量最为显著。`;
-  if(fate>0.5) guide += ' 大阿尔卡那占比较高，说明这是一个有分量的课题，顺势而为。';
-  else if(fate===0) guide += ' 全数为小阿尔卡那，主动权在现实层面，每一步将决定走向。';
+  if(q.trim()) guide += `关于「${esc(q.trim())}」——`;
+  if(tone) guide += `这一副牌中「${tone.word}」的能量最为突出，它指向你当前真正在经历的核心。`;
+  if(fate>0.5) guide += ' 大阿尔卡那的出现频率不低，这不是一件可以轻看的事，它在提醒你认真对待眼前这个阶段。';
+  else if(fate===0) guide += ' 全数都是小阿尔卡那——局面的大部分主动权在你手里，一步一步来就好。';
   $('rSummary').innerHTML = guide ? `<div class="guide">${guide}</div>` : '';
 
   // 逐牌卡片
@@ -1265,16 +1266,19 @@ function showReading(){
   rc.innerHTML='';
   sp.positions.forEach((pos,i)=>{
     const c=state.drawnCards[i];
+    const isRev = c.rev;
     const item=document.createElement('div');
     item.className='rc-item';
+    const meaningText = isRev ? (c.reversed||'') : (c.upright||'');
     item.innerHTML=`
       <div class="rc-head">
         <span class="rc-pos">${pos.label}</span>
-        <span class="rc-name">${c.name}<span class="rc-or ${c.reversed?'rev':'up'}">${c.reversed?'逆位':'正位'}</span></span>
+        <span class="rc-name">${c.name}</span>
+        <span class="rc-or ${isRev?'rev':'up'}">${isRev?'逆位':'正位'}</span>
         <span class="rc-icon">${c.icon}</span>
       </div>
       <div class="rc-keys">${(c.keywords||[]).map(k=>`<span class="rk">${k}</span>`).join('')}</div>
-      <div class="rc-meaning">${meaning(c)}</div>
+      <div class="rc-meaning">${meaningText}</div>
     `;
     rc.appendChild(item);
   });
