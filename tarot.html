@@ -964,6 +964,9 @@ function resetTable(){
   state.phase='idle';
   state.drawnCards=[];
   state.drawIndex=0;
+  // 移除旧扇形牌（它不在 deckZone 内）
+  const oldFw=document.getElementById('fanWrapper');
+  if(oldFw) oldFw.remove();
   $('table').className='table';
   $('table').innerHTML='<div class="empty-table">点击下方「开始洗牌」</div>';
   $('deckZone').innerHTML='';
@@ -991,6 +994,9 @@ async function startShuffle(){
   state.phase='shuffling';
   state.drawIndex=0;
   state.drawnCards=[];
+  // 移除旧扇形牌
+  const oldFw=document.getElementById('fanWrapper');
+  if(oldFw) oldFw.remove();
   $('actionBtn').disabled=true;
   $('resetBtn').style.display='none';
   setStep(2);
@@ -1222,6 +1228,9 @@ function snapAndFlip(idx, slotEl){
 // 备用：一键全抽
 function quickDrawAll(){
   if(state.phase!=='ready') return;
+  // 移出扇形牌，只保留飞牌动画
+  const fw=$('fanWrapper');
+  if(fw) fw.style.opacity='0',setTimeout(()=>fw.remove(),300);
   const slots=document.querySelectorAll('.slot.empty');
   const cards=document.querySelectorAll('.fan-card:not(.gone)');
   let i=0;
