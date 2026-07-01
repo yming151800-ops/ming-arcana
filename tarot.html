@@ -161,52 +161,25 @@ body{
 .question-box input::placeholder{color:var(--blue-soft);opacity:.7;}
 
 /* 摄像头预览 */
-/* 摄像头相关样式已移除 */
-.video-frame{
-  position:absolute;inset:0;border-radius:24px;overflow:hidden;
-  background:linear-gradient(135deg,#dcebff,#c4dcff);
-  border:2px solid rgba(255,255,255,0.85);
-  box-shadow:0 14px 40px rgba(91,141,208,0.3),inset 0 0 30px rgba(255,255,255,0.4);
+/* 摄像头全部移除 + 扇形/拖拽 */
+.fan-wrapper{position:relative;width:100%;max-width:560px;height:180px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;}
+.fan-card{
+  position:absolute;width:88px;height:142px;border-radius:10px;cursor:grab;z-index:5;
+  background:linear-gradient(145deg,#7eb5e8,#3b6fb0);
+  border:2px solid rgba(255,255,255,0.9);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 22px rgba(91,141,208,0.35);
+  touch-action:none;user-select:none;transition:transform .12s,box-shadow .12s;
 }
-.video-frame video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
-.video-frame .overlay{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(196,220,255,0.4) 100%);pointer-events:none;}
-.corner{position:absolute;width:22px;height:22px;border:2px solid #fff;opacity:.9;}
-.corner.tl{top:12px;left:12px;border-right:none;border-bottom:none;border-radius:6px 0 0 0;}
-.corner.tr{top:12px;right:12px;border-left:none;border-bottom:none;border-radius:0 6px 0 0;}
-.corner.bl{bottom:12px;left:12px;border-right:none;border-top:none;border-radius:0 0 0 6px;}
-.corner.br{bottom:12px;right:12px;border-left:none;border-top:none;border-radius:0 0 6px 0;}
-.hand-hint{
-  position:absolute;top:14px;left:50%;transform:translateX(-50%);
-  font-size:12px;letter-spacing:1px;color:var(--blue-deep);
-  padding:5px 14px;background:rgba(255,255,255,0.85);border-radius:20px;
-  opacity:0;transition:opacity .4s;white-space:nowrap;
+.fan-card .fc-mandala{font-size:20px;color:rgba(255,255,255,0.8);text-shadow:0 0 8px rgba(255,255,255,0.5);}
+.fan-card.dragging{z-index:100;cursor:grabbing;box-shadow:0 20px 48px rgba(59,111,176,0.5);}
+.fan-card.gone{opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;}
+.slot.highlight{
+  border-color:var(--gold) !important;border-style:solid !important;
+  background:rgba(201,168,106,0.15) !important;
+  box-shadow:0 0 24px rgba(201,168,106,0.5) !important;
+  transform:scale(1.08);transition:all .2s;
 }
-.hand-hint.show{opacity:1;animation:hintpulse 1.6s ease-in-out infinite;}
-@keyframes hintpulse{0%,100%{opacity:.75}50%{opacity:1}}
-.detect-ring{
-  position:absolute;top:50%;left:50%;width:90px;height:90px;
-  border:3px solid rgba(255,255,255,0.8);border-radius:50%;
-  transform:translate(-50%,-50%) scale(0);transition:transform .3s,border-color .3s,box-shadow .3s;pointer-events:none;
-}
-.detect-ring.active{transform:translate(-50%,-50%) scale(1);}
-.detect-ring.locked{border-color:var(--gold);box-shadow:0 0 26px var(--gold-soft);}
-
-/* 摄像头授权失败引导卡 */
-.cam-error{
-  position:absolute;inset:0;border-radius:24px;
-  background:var(--glass-strong);backdrop-filter:blur(10px);
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  padding:18px;text-align:center;border:2px solid rgba(255,255,255,0.85);
-}
-.cam-error.show{display:flex;}
-.cam-error .ce-icon{font-size:30px;margin-bottom:8px;}
-.cam-error .ce-title{font-size:14px;font-weight:600;color:var(--blue-ink);margin-bottom:6px;letter-spacing:1px;}
-.cam-error .ce-msg{font-size:12px;color:var(--blue-soft);line-height:1.7;margin-bottom:14px;}
-.cam-error .ce-btns{display:flex;gap:8px;}
-.ce-btn{font-family:"Noto Serif SC";font-size:12px;letter-spacing:1px;padding:8px 16px;border-radius:20px;cursor:pointer;border:none;}
-.ce-btn.primary{background:linear-gradient(135deg,var(--blue-soft),var(--blue-deep));color:#fff;}
-.ce-btn.ghost{background:rgba(255,255,255,0.7);color:var(--blue-deep);border:1.5px solid rgba(91,141,208,0.3);}
-
 /* ========== 牌桌 ========== */
 .table{width:100%;max-width:860px;min-height:200px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;margin:8px 0 18px;position:relative;}
 
@@ -446,7 +419,7 @@ body{
   <div class="slogan">MING ARCANA</div>
   <div class="desc">在云端，与你的内心对话<br>选一个牌阵，点击牌堆逐张抽牌</div>
   <button class="intro-btn" id="startBtn">开 启</button>
-  <div class="privacy">摄像头仅在本地识别「指尖」位置<br>画面不存储、不上传，关闭即销毁</div>
+  <div class="privacy">韦特塔罗 78 张「指尖」位置<br>画面不存储、不上传，关闭即销毁</div>
 </div>
 
 <!-- 主舞台 -->
@@ -829,7 +802,6 @@ function suitTone(deck){ // 主导花色 → 议题底色
 const CONNECT = ['于是','也因此','顺着这条脉络','继而','同时','随之'];
 const DIVINE = ['提示','揭示','表明','暗示'];
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 // 主入口：根据牌阵类型生成故事 HTML
 function buildStory(spreadKey, cards, question){
@@ -1034,223 +1006,242 @@ async function startShuffle(){
   $('actionBtn').disabled=true;
   $('resetBtn').style.display='none';
   setStep(2);
-  setStatus('洗牌中…让牌接住你此刻的心绪');
-
-  // 渲染牌桌空槽位 + 牌堆
-  const sp=SPREADS[state.spread];
+  setStatus('洗牌中…');
+  const deckZone=$('deckZone');
+  deckZone.innerHTML='';
   const table=$('table');
-  table.className='table'+(sp.layout==='celtic'?' celtic':'');
   table.innerHTML='';
-  sp.positions.forEach((pos)=>{
+  const sp=SPREADS[state.spread];
+  table.className='table'+(sp.layout==='celtic'?' celtic':'');
+  sp.positions.forEach(pos=>{
     const slot=document.createElement('div');
-    slot.className='slot empty';
-    slot.dataset.key=pos.key;
+    slot.className='slot empty'; slot.dataset.key=pos.key;
     slot.innerHTML=`<div class="pos-label-empty">${pos.label}</div>`;
     table.appendChild(slot);
   });
-
-  const deckZone=$('deckZone');
-  deckZone.innerHTML='';
+  // 牌堆抖动
   const deck=document.createElement('div');
-  deck.className='deck';
-  deck.id='deck';
+  deck.className='deck'; deck.id='deck';
   for(let i=0;i<6;i++){
     const dc=document.createElement('div');
     dc.className='deck-card'+(i===5?' deck-top':'');
     dc.style.cssText=`background:linear-gradient(135deg,#5b8dd0,#3b6fb0);border:2px solid rgba(255,255,255,0.85);transform:translate(${i*1.5}px,${-i*1.5}px) rotate(${(i-3)*1.5}deg);box-shadow:0 6px 16px rgba(91,141,208,0.3);`;
     deck.appendChild(dc);
   }
-  const hint=document.createElement('div');
-  hint.className='deck-hint';
-  hint.id='deckHint';
-  hint.textContent='点击抽牌';
-  deck.appendChild(hint);
   deckZone.appendChild(deck);
-
-  // 洗牌抖动
   for(let k=0;k<4;k++){
     deck.style.transition='transform .2s';
     deck.style.transform=`rotate(${Math.random()*6-3}deg) translate(${(Math.random()-0.5)*6}px,${(Math.random()-0.5)*4}px)`;
     await sleep(220);
   }
   deck.style.transform='rotate(0) translate(0,0)';
-  await sleep(200);
+  await sleep(150);
+  deckZone.innerHTML=''; // 移除牌堆
 
+  // 洗好牌
   const full=shuffleDeck();
   state._fullDeck=full;
   state.drawnCards=full.slice(0,sp.count);
+  
+  // 扇形摊牌！
+  const fw=document.createElement('div');
+  fw.className='fan-wrapper'; fw.id='fanWrapper';
+  state.drawnCards.forEach((cd,i)=>{
+    const el=document.createElement('div');
+    el.className='fan-card';
+    el.dataset.idx=i;
+    el.innerHTML='<div class="fc-mandala">&#10022;</div>';
+    const total=sp.count;
+    const mid=(total-1)/2;
+    const angle=(i-mid)*7;
+    const yOff=Math.abs(i-mid)*3;
+    el.style.transform=`rotate(${angle}deg) translateY(${yOff}px)`;
+    el.style.zIndex=Math.round(100-Math.abs(i-mid)*3);
+    // 拖拽
+    el.addEventListener('mousedown',e=>startFanDrag(e,i));
+    el.addEventListener('touchstart',e=>startFanDrag(e,i),{passive:true});
+    // 点击兜底
+    el.addEventListener('click',()=>clickFanCard(i));
+    fw.appendChild(el);
+  });
+  deckZone.parentNode.insertBefore(fw, deckZone);
+
   state.phase='ready';
   $('actionBtn').disabled=false;
-  $('actionBtn').textContent='直接抽牌（全抽）';
+  $('actionBtn').textContent='直接全抽';
   $('resetBtn').style.display='inline-block';
-  setStatus(`点击牌堆抽牌  ✦ 还剩 <span class="hl">${sp.count}</span> 张`);
-
-  deck.addEventListener('click', drawOneCard);
+  const n=sp.count;
+  setStatus(`<span class="hl">${n}</span> 张牌已摊开 ✦ 拖拽或点击牌到槽位`);
 }
 
-// 抽一张：震颤 → 飞出 → 翻牌
-async function drawOneCard(){
-  if(state.phase!=='ready') return;
-  const deck=$('deck');
-  if(!deck) return;
-  const idx=state.drawIndex;
-  if(idx>=state.drawnCards.length){ return; }
-  const sp=SPREADS[state.spread];
-
-  // 震颤
+// === 扇形拖拽 ===
+let dragState = null;
+function getPos(e){
+  const p = e.touches ? e.touches[0] : e;
+  return {x: p.clientX, y: p.clientY};
+}
+function startFanDrag(e, idx){
+  if(state.phase!=='ready'||document.querySelector('.fan-card.gone')) return;
   state.phase='sucking';
-  deck.classList.add('shaking');
-  await sleep(700);
-  deck.classList.remove('shaking');
+  const el=document.querySelector(`.fan-card[data-idx="${idx}"]`);
+  if(!el||el.classList.contains('gone')) return;
+  const r=el.getBoundingClientRect();
+  const p=getPos(e);
+  dragState={el,idx,ox:p.x-r.left,oy:p.y-r.top,startX:r.left,startY:r.top};
+  el.classList.add('dragging');
+  el.style.left=r.left+'px'; el.style.top=r.top+'px';
+  el.style.position='fixed'; el.style.transform='scale(1.08)';
+  e.preventDefault&&e.preventDefault();
+}
+document.addEventListener('mousemove',e=>{
+  if(!dragState) return;
+  const p=getPos(e);
+  const el=dragState.el;
+  el.style.left=(p.x-dragState.ox)+'px'; el.style.top=(p.y-dragState.oy)+'px';
+  // 检查对所有空槽位的距离
+  const slots=document.querySelectorAll('.slot.empty');
+  let near=null,nearDist=999;
+  slots.forEach(s=>{
+    const sr=s.getBoundingClientRect();
+    const cx=sr.left+sr.width/2, cy=sr.top+sr.height/2;
+    const d=Math.hypot(p.x-cx,p.y-cy);
+    if(d<nearDist){nearDist=d;near=s;}
+  });
+  document.querySelectorAll('.slot.highlight').forEach(s=>s.classList.remove('highlight'));
+  if(near&&nearDist<80){
+    near.classList.add('highlight');
+    dragState.nearSlot=near;
+  }else{dragState.nearSlot=null;}
+});
+document.addEventListener('touchmove',e=>{
+  if(!dragState) return;
+  e.preventDefault();
+  const touch=e.touches[0];
+  const el=dragState.el;
+  el.style.left=(touch.clientX-dragState.ox)+'px'; el.style.top=(touch.clientY-dragState.oy)+'px';
+  const slots=document.querySelectorAll('.slot.empty');
+  let near=null,nearDist=999;
+  slots.forEach(s=>{
+    const sr=s.getBoundingClientRect();
+    const d=Math.hypot(touch.clientX-(sr.left+sr.width/2),touch.clientY-(sr.top+sr.height/2));
+    if(d<nearDist){nearDist=d;near=s;}
+  });
+  document.querySelectorAll('.slot.highlight').forEach(s=>s.classList.remove('highlight'));
+  if(near&&nearDist<80){near.classList.add('highlight');dragState.nearSlot=near;}
+  else{dragState.nearSlot=null;}
+},{passive:false});
+document.addEventListener('mouseup',endFanDrag);
+document.addEventListener('touchend',endFanDrag);
 
-  const cardData=state.drawnCards[idx];
+function endFanDrag(e){
+  if(!dragState) return;
+  const el=dragState.el; const idx=dragState.idx;
+  el.classList.remove('dragging');
+  if(dragState.nearSlot){
+    // 磁吸翻牌！
+    const slot=dragState.nearSlot;
+    snapAndFlip(idx, slot);
+  }else{
+    // 回到原位
+    el.style.position='';
+    el.style.left='';el.style.top='';
+    const total=state.drawnCards.length;
+    const mid=(total-1)/2;
+    const angle=(idx-mid)*7;
+    const yOff=Math.abs(idx-mid)*3;
+    el.style.transform=`rotate(${angle}deg) translateY(${yOff}px)`;
+    state.phase='ready';
+  }
+  document.querySelectorAll('.slot.highlight').forEach(s=>s.classList.remove('highlight'));
+  dragState=null;
+}
 
-  // 找到对应空槽位，按位置key匹配
+function clickFanCard(idx){
+  if(state.phase!=='ready') return;
+  // 找下一个空槽位
+  const slots=document.querySelectorAll('.slot.empty');
+  if(slots.length===0) return;
+  snapAndFlip(idx, slots[0]);
+}
+
+function snapAndFlip(idx, slotEl){
+  const el=document.querySelector(`.fan-card[data-idx="${idx}"]`);
+  if(!el) return;
+  el.classList.add('gone');
+  const cd=state.drawnCards[idx];
+  const sr=slotEl.getBoundingClientRect();
+  const dr=el.getBoundingClientRect();
+  // 飞牌动画
+  const sp=SPREADS[state.spread];
   const pos=sp.positions[idx];
-  const slot=table.querySelector(`.slot.empty[data-key="${pos.key}"]`)||table.querySelectorAll('.slot.empty')[idx]||table.children[idx];
-  if(!slot) return;
-  const sr=slot.getBoundingClientRect();
-
-  // 飞牌元素
-  const dr=deck.getBoundingClientRect();
   const fly=document.createElement('div');
   fly.className='card fly-card';
-  if(cardData.reversed) fly.classList.add('reversed');
+  if(cd.reversed) fly.classList.add('reversed');
   fly.innerHTML=`
     <div class="inner">
       <div class="face back"><div class="mandala"></div></div>
       <div class="face front">
-        ${cardData.reversed?'<div class="f-rev">逆</div>':''}
+        ${cd.reversed?'<div class="f-rev">逆</div>':''}
         <div class="f-top">${pos.label}</div>
-        <div class="f-icon">${cardData.icon}</div>
-        <div class="f-name">${cardData.name}</div>
-        <div class="f-en">${cardData.en}</div>
+        <div class="f-icon">${cd.icon}</div>
+        <div class="f-name">${cd.name}</div>
+        <div class="f-en">${cd.en}</div>
       </div>
     </div>`;
   document.body.appendChild(fly);
-  fly.style.left=dr.left+'px'; fly.style.top=dr.top+'px';
-  fly.style.width=dr.width+'px'; fly.style.height=dr.height+'px';
+  fly.style.left=dr.left+'px';fly.style.top=dr.top+'px';
+  fly.style.width=dr.width+'px';fly.style.height=dr.height+'px';
   fly.offsetHeight;
-
-  // 飞向槽位+翻转
   setTimeout(()=>{
     fly.classList.add('flipping');
-    fly.style.left=sr.left+'px'; fly.style.top=sr.top+'px';
-    fly.style.width=sr.width+'px'; fly.style.height=sr.height+'px';
+    fly.style.left=sr.left+'px';fly.style.top=sr.top+'px';
+    fly.style.width=sr.width+'px';fly.style.height=sr.height+'px';
   },50);
-
-  // 落地：把飞牌换成真正的牌
   setTimeout(()=>{
     fly.remove();
-    // 用真正牌替换空槽
+    slotEl.classList.remove('empty','highlight');
     const real=document.createElement('div');
     real.className='card flipped';
-    if(cardData.reversed) real.classList.add('reversed');
+    if(cd.reversed) real.classList.add('reversed');
     real.innerHTML=`
       <div class="inner">
         <div class="face back"><div class="mandala"></div></div>
         <div class="face front">
-          ${cardData.reversed?'<div class="f-rev">逆</div>':''}
+          ${cd.reversed?'<div class="f-rev">逆</div>':''}
           <div class="f-top">${pos.label}</div>
-          <div class="f-icon">${cardData.icon}</div>
-          <div class="f-name">${cardData.name}</div>
-          <div class="f-en">${cardData.en}</div>
+          <div class="f-icon">${cd.icon}</div>
+          <div class="f-name">${cd.name}</div>
+          <div class="f-en">${cd.en}</div>
         </div>
       </div>`;
-    slot.classList.remove('empty');
-    slot.classList.add('filled');
-    slot.innerHTML='';
-    slot.appendChild(real);
+    slotEl.innerHTML='';slotEl.appendChild(real);
     const lbl=document.createElement('div');
-    lbl.className='pos-label';
-    lbl.textContent=pos.label;
-    if(sp.layout!=='celtic') slot.appendChild(lbl);
+    lbl.className='pos-label';lbl.textContent=pos.label;
+    if(sp.layout!=='celtic') slotEl.appendChild(lbl);
     emitSparks(sr.left+sr.width/2, sr.top+sr.height/2, 8);
+    state.drawIndex++;
+    const remain=document.querySelectorAll('.fan-card:not(.gone)').length;
+    if(remain===0){
+      state.phase='drawn';setStep(3);
+      setTimeout(()=>{setStatus('解读已生成');showReading();},400);
+    }else{
+      state.phase='ready';
+      setStatus(`还剩 <span class="hl">${remain}</span> 张 ✦ 拖拽或点击放入槽位`);
+    }
   },550);
-
-  state.drawIndex=idx+1;
-  await sleep(350);
-
-  if(state.drawIndex>=sp.count){
-    // 抽完：牌堆淡出
-    if(deck) deck.style.transition='opacity .4s,transform .4s',deck.style.opacity='0',deck.style.transform='translateY(20px)';
-    setTimeout(()=>{ if(deck) deck.remove(); },500);
-    await sleep(500);
-    state.phase='drawn';
-    setStep(3);
-    setStatus('解读已生成 ✦');
-    showReading();
-  }else{
-    state.phase='ready';
-    setStatus(`还剩 <span class="hl">${sp.count-state.drawIndex}</span> 张，点击牌堆继续抽牌`);
-  }
 }
 
-// 备用：一键全抽（跳过震颤逐张，直接翻完全部）
+// 备用：一键全抽
 function quickDrawAll(){
-  if(state.phase!=='ready'&&state.phase!=='sucking') return;
-  const deck=$('deck');
-  if(deck) deck.remove();
-  const sp=SPREADS[state.spread];
-  if(state.drawnCards.length===0){
-    state.drawnCards=(state._fullDeck||shuffleDeck()).slice(0,sp.count);
-  }
-  state.drawIndex=sp.count;
-  triggerDraw();
-}
-
-async function triggerDraw(){
-  state.phase='drawing';
-  $('actionBtn').disabled=true;
-  const sp=SPREADS[state.spread];
-  const table=$('table');
-  const slots=table.querySelectorAll('.slot.empty');
-
-  // 隐藏牌堆
-  const deck=$('deck');
-  if(deck) deck.style.transition='opacity .3s',deck.style.opacity='0',setTimeout(()=>{ if(deck) deck.remove(); },300);
-
-  // 把每个空槽位替换为对应的牌
-  slots.forEach((slot, i)=>{
-    const cd=state.drawnCards[i];
-    const pos=sp.positions[i];
-    if(!cd) return;
-    setTimeout(()=>{
-      slot.classList.remove('empty');
-      slot.classList.add('filled');
-      slot.innerHTML='';
-      const card=document.createElement('div');
-      card.className='card flipped';
-      if(cd.reversed) card.classList.add('reversed');
-      card.innerHTML=`
-        <div class="inner">
-          <div class="face back"><div class="mandala"></div></div>
-          <div class="face front">
-            ${cd.reversed?'<div class="f-rev">逆</div>':''}
-            <div class="f-top">${pos.label}</div>
-            <div class="f-icon">${cd.icon}</div>
-            <div class="f-name">${cd.name}</div>
-            <div class="f-en">${cd.en}</div>
-          </div>
-        </div>`;
-      slot.appendChild(card);
-      const lbl=document.createElement('div');
-      lbl.className='pos-label';
-      lbl.textContent=pos.label;
-      if(sp.layout!=='celtic') slot.appendChild(lbl);
-      const r=card.getBoundingClientRect();
-      emitSparks(r.left+r.width/2, r.top+r.height/2, 6);
-    }, i*200);
+  if(state.phase!=='ready') return;
+  const slots=document.querySelectorAll('.slot.empty');
+  const cards=document.querySelectorAll('.fan-card:not(.gone)');
+  let i=0;
+  cards.forEach(c=>{
+    if(slots[i]) snapAndFlip(parseInt(c.dataset.idx), slots[i]);
+    i++;
   });
-
-  setStatus('翻牌中…');
-  await sleep(slots.length*200+800);
-  state.phase='drawn';
-  setStep(3);
-  setStatus('解读已生成 ✦');
-  showReading();
 }
-
 function emitSparks(x,y,n){
   for(let i=0;i<n;i++){
     const s=document.createElement('div');
@@ -1343,7 +1334,6 @@ $('actionBtn').addEventListener('click', ()=>{
   else if(state.phase==='drawn') againDraw();
 });
 $('resetBtn').addEventListener('click', ()=>{ resetTable(); });
-$('ceSkip').addEventListener('click', ()=>{ $('camError').classList.remove('show'); });
 $('rAgain').addEventListener('click', againDraw);
 $('rClose').addEventListener('click', closeReading);
 </script>
