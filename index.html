@@ -777,6 +777,14 @@ const SPREADS = {
       { key:'outcome',  label:'关系走向' }
     ]
   },
+  choice: {
+    name: '选择牌阵', meta: '3张 · 左右与指引', count: 3, layout: 'flex',
+    positions: [
+      { key:'optA', label:'选项A · 走向' },
+      { key:'optB', label:'选项B · 走向' },
+      { key:'guide', label:'指引 · 内在之声' }
+    ]
+  },
   celtic: {
     name: '凯尔特十字', meta: '10张 · 全局深度', count: 10, layout: 'celtic',
     positions: [
@@ -829,6 +837,8 @@ function buildStory(spreadKey, cards, question){
     html = storySingle(cards[0], q, tone);
   } else if(spreadKey==='three'){
     html = storyThree(cards, q, tone);
+  } else if(spreadKey==='choice'){
+    html = storyChoice(cards, q, tone);
   } else if(spreadKey==='relation'){
     html = storyRelation(cards, q, tone);
   } else if(spreadKey==='celtic'){
@@ -898,6 +908,22 @@ function storyRelation(cards, q, tone){
   let p5 = `在当前轨迹上，这段关系走向<span class="ghost-name">${out.name}（${orientWord(out)}）</span>。${meaning(out)}${out.reversed?'逆位在这里意味着这条路径存在变数——结局尚未锁死。':'顺位指向一个稳定的方向——但牌阵不预言，它只揭示当前势能的延伸。'}`;
   return `<h3>关系之镜</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p><p>${p5}</p>`;
 }
+
+// —— 选择牌阵（3张：选项A vs 选项B + 指引）
+function storyChoice(cards, q, tone){
+  const [optA, optB, guide] = cards;
+  let head = q ? `关于「${esc(q)}」的抉择，牌面呈现两个方向——` : `面对选择，牌面呈现两个方向——`;
+  let p1 = `选项A的方向由<span class="ghost-name">${optA.name}（${orientWord(optA)}）</span>代表。${meaning(optA)}`;
+  let p2 = `选项B的方向由<span class="ghost-name">${optB.name}（${orientWord(optB)}）</span>代表。${meaning(optB)}`;
+  let comp = '';
+  if(optA.suit && optB.suit){
+    if(optA.suit===optB.suit) comp = '两个选项的元素相同——无论选哪条路，核心议题是一致的。';
+    else comp = `选项A的基调是「${suitWord(optA.suit)}」，选项B的基调是「${suitWord(optB.suit)}」——它们的本质不同，你在选择的其实是两种不同的能量。`;
+  }
+  let p3 = `内在指引落在<span class="ghost-name">${guide.name}（${orientWord(guide)}）</span>。${meaning(guide)}${optA.reversed!==optB.reversed?'两个选项一正一逆——其中一条路存在明显的阻力或需要反思的部分。这张指引牌会帮你判断哪边的能量更值得跟随。':''}`;
+  return `<h3>选择牌阵</h3><p>${head}</p><p>${p1}</p><p>${p2}</p>${comp?`<p>${comp}</p>`:''}<p>${p3}</p>`;
+}
+function suitWord(s){ return {wands:'行动与创造',cups:'情感与关系',swords:'思绪与抉择',pentacles:'现实与积累'}[s]||s; }
 
 // —— 凯尔特十字（10张，分三幕）
 function storyCeltic(cards, q, tone, fate){
