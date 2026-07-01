@@ -342,42 +342,29 @@ body{
 .reading-head .r-sub{font-size:12px;letter-spacing:2px;color:var(--blue-soft);margin-top:4px;}
 .reading-head .r-q{font-size:13px;color:var(--blue-deep);margin-top:10px;font-style:italic;}
 
-/* 故事主体 */
-.story{
-  background:var(--glass-strong);border-radius:22px;padding:26px 24px;margin:22px 0;
-  border:1.5px solid rgba(255,255,255,0.9);box-shadow:0 16px 40px rgba(91,141,208,0.15);
-  position:relative;
+/* 整体指引 */
+.r-summary .guide{
+  background:var(--glass-strong);border-radius:22px;padding:18px 22px;margin:10px 0 20px;
+  border:1.5px solid rgba(255,255,255,0.9);box-shadow:0 8px 24px rgba(91,141,208,0.1);
+  font-size:14px;line-height:1.9;color:var(--blue-ink);text-align:center;letter-spacing:.5px;
 }
-.story::before{content:"❝";position:absolute;top:8px;left:16px;font-size:46px;color:var(--gold-soft);font-family:serif;line-height:1;opacity:.6;}
-.story h3{font-size:15px;letter-spacing:3px;color:var(--blue-deep);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
-.story h3::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--gold-soft),transparent);}
-.story p{font-size:15px;line-height:2.05;color:var(--blue-ink);letter-spacing:.5px;margin-bottom:14px;text-indent:0;}
-.story p:last-child{margin-bottom:0;}
-.story .accent{color:var(--blue-deep);font-weight:600;}
-.story .ghost-name{color:var(--gold);font-weight:600;}
 
-/* 逐牌卡 */
-.cards-detail{display:flex;flex-direction:column;gap:14px;margin:22px 0;}
-.cd-item{
-  display:flex;gap:14px;align-items:flex-start;
-  background:var(--glass);border-radius:18px;padding:16px;
-  border:1.5px solid rgba(255,255,255,0.8);box-shadow:0 8px 22px rgba(91,141,208,0.1);
+/* 逐牌卡片（新，更清晰） */
+.r-cards{display:flex;flex-direction:column;gap:12px;margin:10px 0;}
+.rc-item{
+  background:var(--glass);border-radius:16px;padding:14px 16px;
+  border:1.5px solid rgba(255,255,255,0.85);box-shadow:0 6px 18px rgba(91,141,208,0.08);
 }
-.cd-mini{width:54px;height:86px;border-radius:8px;flex-shrink:0;
-  background:linear-gradient(165deg,#fff,#f2f8ff);border:1.5px solid var(--blue-soft);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
-.cd-mini .m-icon{font-size:22px;}
-.cd-mini .m-name{font-size:9px;color:var(--blue-ink);letter-spacing:.5px;text-align:center;line-height:1.1;}
-.cd-mini.rev .m-icon,.cd-mini.rev .m-name{transform:rotate(180deg);}
-.cd-body{flex:1;}
-.cd-pos{font-size:11px;letter-spacing:1px;color:var(--gold);margin-bottom:3px;}
-.cd-name{font-size:15px;font-weight:600;color:var(--blue-ink);margin-bottom:4px;}
-.cd-name .orient{font-size:11px;font-weight:400;margin-left:6px;padding:1px 7px;border-radius:8px;}
-.cd-name .orient.up{color:var(--blue-deep);background:rgba(91,141,208,0.12);}
-.cd-name .orient.rev{color:#c25b5b;background:rgba(220,138,138,0.15);}
-.cd-keys{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
-.cd-keys .k{font-size:10px;padding:2px 9px;border-radius:11px;background:rgba(201,168,106,0.15);color:#a8843f;}
-.cd-text{font-size:13px;line-height:1.8;color:var(--blue-ink);}
+.rc-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+.rc-pos{font-size:11px;letter-spacing:1px;color:var(--gold);white-space:nowrap;}
+.rc-name{font-size:16px;font-weight:600;color:var(--blue-ink);flex:1;}
+.rc-or{font-size:11px;font-weight:400;margin-left:6px;padding:1px 8px;border-radius:8px;white-space:nowrap;}
+.rc-or.up{color:var(--blue-deep);background:rgba(91,141,208,0.12);}
+.rc-or.rev{color:#c25b5b;background:rgba(220,138,138,0.15);}
+.rc-icon{font-size:22px;}
+.rc-keys{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+.rc-keys .rk{font-size:10px;padding:2px 9px;border-radius:11px;background:rgba(201,168,106,0.15);color:#a8843f;}
+.rc-meaning{font-size:13px;line-height:1.8;color:var(--blue-ink);}
 
 .r-actions{display:flex;gap:10px;justify-content:center;margin-top:24px;}
 
@@ -390,7 +377,6 @@ body{
 /* 响应式 */
 @media(max-width:600px){
   .card,.deck{width:88px;height:142px;}
-  .cd-mini{width:48px;height:76px;}
   .intro .name{font-size:42px;}
   .spread-tab{min-width:120px;padding:9px 12px;}
   .table.celtic{max-width:380px;}
@@ -471,8 +457,8 @@ body{
       <div class="r-sub" id="rSub"></div>
       <div class="r-q" id="rQ"></div>
     </div>
-    <div class="story" id="story"></div>
-    <div class="cards-detail" id="cardsDetail"></div>
+    <div class="r-summary" id="rSummary"></div>
+    <div class="r-cards" id="rCards"></div>
     <div class="r-actions">
       <button class="btn" id="rAgain">再抽一次</button>
       <button class="btn-ghost" id="rClose">收起</button>
@@ -1265,30 +1251,32 @@ function showReading(){
   $('rSub').textContent=sp.meta;
   $('rQ').textContent = q.trim()? '问：'+q.trim() : '';
 
-  // 故事
-  $('story').innerHTML = buildStory(state.spread, state.drawnCards, q);
+  // 整体指引（精简）
+  const tone = suitTone(state.drawnCards);
+  const fate = arcanaWeight(state.drawnCards);
+  let guide = '';
+  if(tone) guide += `本次牌面中「${tone.word}」的能量最为显著。`;
+  if(fate>0.5) guide += ' 大阿尔卡那占比较高，说明这是一个有分量的课题，顺势而为。';
+  else if(fate===0) guide += ' 全数为小阿尔卡那，主动权在现实层面，每一步将决定走向。';
+  $('rSummary').innerHTML = guide ? `<div class="guide">${guide}</div>` : '';
 
-  // 逐牌详情
-  const cd=$('cardsDetail');
-  cd.innerHTML='';
+  // 逐牌卡片
+  const rc=$('rCards');
+  rc.innerHTML='';
   sp.positions.forEach((pos,i)=>{
     const c=state.drawnCards[i];
     const item=document.createElement('div');
-    item.className='cd-item';
+    item.className='rc-item';
     item.innerHTML=`
-      <div class="cd-mini${c.reversed?' rev':''}">
-        <div class="m-icon">${c.icon}</div>
-        <div class="m-name">${c.name}</div>
+      <div class="rc-head">
+        <span class="rc-pos">${pos.label}</span>
+        <span class="rc-name">${c.name}<span class="rc-or ${c.reversed?'rev':'up'}">${c.reversed?'逆位':'正位'}</span></span>
+        <span class="rc-icon">${c.icon}</span>
       </div>
-      <div class="cd-body">
-        <div class="cd-pos">${pos.label}</div>
-        <div class="cd-name">${c.name}
-          <span class="orient ${c.reversed?'rev':'up'}">${c.reversed?'逆位':'正位'}</span>
-        </div>
-        <div class="cd-keys">${(c.keywords||[]).map(k=>`<span class="k">${k}</span>`).join('')}</div>
-        <div class="cd-text">${meaning(c)}</div>
-      </div>`;
-    cd.appendChild(item);
+      <div class="rc-keys">${(c.keywords||[]).map(k=>`<span class="rk">${k}</span>`).join('')}</div>
+      <div class="rc-meaning">${meaning(c)}</div>
+    `;
+    rc.appendChild(item);
   });
 
   $('reading').classList.add('show');
