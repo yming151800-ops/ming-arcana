@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Ming Arcana · 云端抽牌</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Ming Arcana · 云端抽牌 · v4</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
@@ -126,8 +129,8 @@ body{
 .steps .stp{padding:4px 10px;border-radius:20px;background:var(--glass);transition:all .3s;opacity:.6;}
 .steps .stp.on{background:linear-gradient(135deg,var(--blue-soft),var(--blue-deep));color:#fff;opacity:1;box-shadow:0 4px 12px var(--shadow-blue);}
 
-/* 牌阵选择 */
-.spread-picker{width:100%;max-width:760px;margin:6px 0 14px;}
+/* 牌阵选择（始终可见） */
+.spread-picker{width:100%;max-width:760px;margin:6px 0 14px;position:sticky;top:0;z-index:30;}
 .spread-picker .label{font-size:12px;letter-spacing:2px;color:var(--blue-soft);margin-bottom:8px;text-align:center;}
 .spread-tabs{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
 .spread-tab{
@@ -778,11 +781,13 @@ const SPREADS = {
     ]
   },
   choice: {
-    name: '选择牌阵', meta: '3张 · 左右与指引', count: 3, layout: 'flex',
+    name: '选择牌阵', meta: '5张 · 二选一决策', count: 5, layout: 'flex',
     positions: [
-      { key:'optA', label:'选项A · 走向' },
-      { key:'optB', label:'选项B · 走向' },
-      { key:'guide', label:'指引 · 内在之声' }
+      { key:'curr',  label:'你的现状' },
+      { key:'devA',  label:'选项A的走向' },
+      { key:'devB',  label:'选项B的走向' },
+      { key:'resA',  label:'选项A的结果' },
+      { key:'resB',  label:'选项B的结果' }
     ]
   },
   celtic: {
@@ -909,19 +914,22 @@ function storyRelation(cards, q, tone){
   return `<h3>关系之镜</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p><p>${p5}</p>`;
 }
 
-// —— 选择牌阵（3张：选项A vs 选项B + 指引）
+// —— 选择牌阵（5张：二选一决策）
 function storyChoice(cards, q, tone){
-  const [optA, optB, guide] = cards;
-  let head = q ? `关于「${esc(q)}」的抉择，牌面呈现两个方向——` : `面对选择，牌面呈现两个方向——`;
-  let p1 = `选项A的方向由<span class="ghost-name">${optA.name}（${orientWord(optA)}）</span>代表。${meaning(optA)}`;
-  let p2 = `选项B的方向由<span class="ghost-name">${optB.name}（${orientWord(optB)}）</span>代表。${meaning(optB)}`;
+  const [curr, devA, devB, resA, resB] = cards;
+  let head = q ? `关于「${esc(q)}」的抉择，牌面展开两条路径——` : `面对选择，牌面展开两条路径——`;
+  let p1 = `你的现状由<span class="ghost-name">${curr.name}（${orientWord(curr)}）</span>代表。${meaning(curr)}这是你站在岔路口时的起点。`;
+  let p2 = `选项A的走向是<span class="ghost-name">${devA.name}（${orientWord(devA)}）</span>。${meaning(devA)}${relate(curr,devA)}`;
+  let p3 = `选项B的走向是<span class="ghost-name">${devB.name}（${orientWord(devB)}）</span>。${meaning(devB)}${relate(curr,devB)}`;
+  let p4 = `若持续走A，结果指向<span class="ghost-name">${resA.name}（${orientWord(resA)}）</span>。${meaning(resA)}${relate(devA,resA)}`;
+  let p5 = `若选择B，结果指向<span class="ghost-name">${resB.name}（${orientWord(resB)}）</span>。${meaning(resB)}${relate(devB,resB)}`;
+  // 元素对比
   let comp = '';
-  if(optA.suit && optB.suit){
-    if(optA.suit===optB.suit) comp = '两个选项的元素相同——无论选哪条路，核心议题是一致的。';
-    else comp = `选项A的基调是「${suitWord(optA.suit)}」，选项B的基调是「${suitWord(optB.suit)}」——它们的本质不同，你在选择的其实是两种不同的能量。`;
+  if(devA.suit && devB.suit){
+    if(devA.suit===devB.suit) comp = '两条路径的元素相同——表面是二选一，但无论选哪条，核心议题一致。';
+    else comp = `选项A的基调是「${suitWord(devA.suit)}」，选项B的基调是「${suitWord(devB.suit)}」——你选择的本质不是事情，而是一种能量。`;
   }
-  let p3 = `内在指引落在<span class="ghost-name">${guide.name}（${orientWord(guide)}）</span>。${meaning(guide)}${optA.reversed!==optB.reversed?'两个选项一正一逆——其中一条路存在明显的阻力或需要反思的部分。这张指引牌会帮你判断哪边的能量更值得跟随。':''}`;
-  return `<h3>选择牌阵</h3><p>${head}</p><p>${p1}</p><p>${p2}</p>${comp?`<p>${comp}</p>`:''}<p>${p3}</p>`;
+  return `<h3>选择牌阵</h3><p>${head}</p><p>${p1}</p><p>${p2}</p><p>${p3}</p><p>${p4}</p><p>${p5}</p>${comp?`<p>${comp}</p>`:''}`;
 }
 function suitWord(s){ return {wands:'行动与创造',cups:'情感与关系',swords:'思绪与抉择',pentacles:'现实与积累'}[s]||s; }
 
